@@ -1,7 +1,7 @@
-import { createVocabulary } from "@/app/vocabulary/add/actions";
+import { createVocabulary } from "@/app/actions/vocabulary";
 import Form from 'next/form'
 
-export default function Page() {
+export default function AddPage() {
     return (
         <div className="p-8">
             <h3 className="text-2xl font-bold mb-6 text-blue-dark">단어 추가</h3>
@@ -17,12 +17,13 @@ export default function Page() {
                 <div className="flex flex-col">
                     <label className="text-lg mb-2">품사</label>
                     <select name="partOfSpeech" className="bg-gray-10 p-2 border rounded-md">
-                        <option value="noun">명사</option>
-                        <option value="verb">동사</option>
-                        <option value="adjective">형용사</option>
-                        <option value="adverb">부사</option>
-                        <option value="preposition">전치사</option>
-                        <option value="conjunction">접속사</option>
+                        <option value=''>없음</option>
+                        <option value="명">명사</option>
+                        <option value="동">동사</option>
+                        <option value="형">형용사</option>
+                        <option value="부">부사</option>
+                        <option value="전치사">전치사</option>
+                        <option value="접속사">접속사</option>
                     </select>
                 </div>
                 <button
