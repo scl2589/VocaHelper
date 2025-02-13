@@ -1,0 +1,54 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@font-face {
+  font-family: 'Pretendard-Regular';
+  src: url('https://fastly.jsdelivr.net/gh/Project-Noonnu/noonfonts_2107@1.1/Pretendard-Regular.woff') format('woff');
+  font-weight: 400;
+  font-style: normal;
+}
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+  --color-gray-90: #526475;
+  --color-gray-70: #7F92A4;
+  --color-gray-50: #CFD8DF;
+  --color-gray-30: #D8E3E7;
+  --color-gray-10: #F6F9F7;
+  --color-blue-light: #c5d1e1;
+  --color-yellow-medium: #FFC259;
+  --color-green-medium: #2CC8A7;
+  --color-blue-medium: #1C95E8;
+  --color-blue-dark: #061B2E;
+  --color-pink-light: #FFCAD4;
+  --color-pink-medium: #FF8082;
+  --color-pink-dark: #FF407D;
+
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+    --color-blue-medium: #75869C; /* Darker Blue for dark mode */
+    --color-green-medium: #8C9A8A; /* Darker Green for dark mode */
+    --color-yellow-medium: #D2B49E; /* Darker Yellow for dark mode */
+    --color-pink-medium: #B97A7C;
+  }
+}
+
+body {
+  color: var(--foreground);
+  background: var(--background);
+  font-family: 'Pretendard-Regular', sans-serif;
+}
+
+input {
+  border-radius: 10px;
+  background: var(--color-gray-10);
+  &:focus {
+    outline: 1px solid var(--color-yellow-medium);
+  }
+}
