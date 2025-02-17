@@ -1,39 +1,50 @@
 "use server";
 
 import { supabase } from "@/lib/supabase";
-import { redirect } from "next/navigation";
+// import { redirect } from "next/navigation";
 import {revalidatePath} from "next/cache";
 import * as XLSX from 'xlsx';
+
 
 export async function createVocabulary(formData: FormData) {
     // FormData에서 값 추출
     const word = formData.get("word") as string;
-    const definition = formData.get("definition") as string;
-    const partOfSpeech = formData.get("partOfSpeech") as string;
+    const definitions = formData.getAll("definition") as string[];
+    const partsOfSpeech = formData.getAll("partOfSpeech") as string[];
 
     // 데이터 검증
-    if (!word || !definition) {
-        throw new Error("모든 필드를 입력해주세요.");
+    if (!word) {
+        throw new Error("단어를 입력해주세요.");
+    }
+    if (definitions.length === 0 || definitions.some((def) => !def.trim())) {
+        throw new Error("적어도 하나의 뜻을 입력해주세요.");
     }
 
-    // Supabase에 데이터 삽입
-    const { data, error } = await supabase.from("vocabularies").insert([
-        {
-            word,
-            definitions: [{definition, partOfSpeech}],
-            book: null,
-            chapter: null,
-        },
-    ]);
+    // 뜻과 품사를 객체 배열로 변환
+    const definitionObjects = definitions.map((definition, index) => ({
+        definition,
+        partOfSpeech: partsOfSpeech[index] || "", // 품사가 비어 있을 수 있음
+    }));
 
-    if (error) {
-        throw new Error(error.message);
+    try {
+        // Supabase에 데이터 삽입
+        const { error } = await supabase.from("vocabularies").insert([
+            {
+                word,
+                definitions: definitionObjects,
+                book: null,
+                chapter: null,
+            },
+        ]);
+
+        if (error) throw new Error(error.message);
+
+        // 성공 시 리다이렉트
+        return { success: true };
+    } catch (err) {
+        console.error("Error inserting vocabulary:", err);
+        throw new Error("단어 추가 중 오류가 발생했습니다.");
     }
-
-    console.log(data);
-
-    // 성공 시 리다이렉트
-    redirect("/vocabulary");
 }
 
 export async function getVocabularies() {
@@ -93,7 +104,6 @@ export async function createVocabularyFromFile(formData: FormData): Promise<void
     // "의미N", "품사N" 컬럼 동적 감지
     const meaningKeys = firstRowData.filter((key) => key.startsWith("의미"));
     const partOfSpeechKeys = firstRowData.filter((key) => key.startsWith("품사"));
-    console.log(meaningKeys, partOfSpeechKeys);
 
     // 엑셀 데이터를 JSON으로 변환
     const json: VocabularyRow[] = XLSX.utils.sheet_to_json(sheet);
