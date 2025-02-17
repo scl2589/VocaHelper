@@ -12,7 +12,7 @@ export default function AddPage() {
                 </div>
                 <div className="flex flex-col">
                     <label className="text-lg mb-2">뜻</label>
-                    <input type="text" name="meaning" className="bg-gray-10 p-2 border rounded-md" required />
+                    <input type="text" name="definition" className="bg-gray-10 p-2 border rounded-md" required />
                 </div>
                 <div className="flex flex-col">
                     <label className="text-lg mb-2">품사</label>
