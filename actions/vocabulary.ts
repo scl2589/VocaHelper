@@ -3,6 +3,7 @@
 import { supabase } from "@/lib/supabase";
 import {revalidatePath} from "next/cache";
 import * as XLSX from 'xlsx';
+import {Vocabulary} from "@/types/vocabulary";
 
 
 export async function createVocabulary(formData: FormData) {
@@ -46,9 +47,9 @@ export async function createVocabulary(formData: FormData) {
     }
 }
 
-export async function getVocabularies() {
+export async function getVocabularies(): Promise<Vocabulary[]> {
     const {data} = await supabase.from("vocabularies").select();
-    return data;
+    return data || [];
 }
 
 export async function deleteVocabulary(formData: FormData) {

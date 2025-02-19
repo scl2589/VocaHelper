@@ -7,7 +7,7 @@ import {Book} from "@/types/book";
 
 export async function getVocabularyBook(): Promise<Book[]> {
     const { data } = await supabase.from("books").select();
-    return data || []; // null 방지
+    return data || [];
 }
 
 export async function createVocabularyBook(formData: FormData) {

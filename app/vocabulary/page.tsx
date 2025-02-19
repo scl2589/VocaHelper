@@ -1,10 +1,7 @@
 import {getVocabularies, deleteVocabulary} from "@/actions/vocabulary";
 import AddButton from "@/components/addButton";
 
-type Definition = {
-    definition: string;
-    partOfSpeech: string;
-}
+import {Definition} from "@/types/vocabulary";
 
 export default async function vocabularyPage() {
     const vocabularies = await getVocabularies();
