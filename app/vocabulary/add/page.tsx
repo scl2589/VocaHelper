@@ -1,13 +1,24 @@
 'use client'
 
-import { useState, FormEvent } from "react";
-import { createVocabulary } from "@/app/actions/vocabulary";
+import { useState, FormEvent, useEffect } from "react";
+import { createVocabulary } from "@/actions/vocabulary";
+import { getVocabularyBook } from "@/actions/vocabularyBook";
 import Form from 'next/form';
 import {useRouter} from "next/navigation";
+import Link from "next/link";
+import {Book} from '@/types/book'
 
 export default function AddPage() {
     const [definitions, setDefinitions] = useState([{ id: 0, partOfSpeech: "", definition: "" }]);
+    const [books, setBooks] = useState<Book[]>([]);
     const router = useRouter();
+
+    useEffect(() => {
+        (async() => {
+            const data = await getVocabularyBook();
+            setBooks(data);
+        })();
+    }, [])
 
     // 입력 필드 추가
     const addDefinitionField = () => {
@@ -50,8 +61,17 @@ export default function AddPage() {
             <h3 className="text-2xl font-bold mb-6 text-blue-dark">단어 추가</h3>
             <Form onSubmit={handleSubmit} className="flex flex-col gap-4" action={""}>
                 <div className="flex flex-col gap-2">
+                    <label className="text-lg">단어장</label>
+                    <div className="flex flex-row items-center justify-between">
+                        <select className="bg-gray-10 p-2 border rounded-md">
+                            {books.map((book) => <option key={book.name} value={book.name}>{book.name}</option>)}
+                        </select>
+                        <Link href="/vocabulary/books/add" className="text-sm hover:text-pink-medium hover:scale-125">단어책 추가</Link>
+                    </div>
+                </div>
+                <div className="flex flex-col gap-2">
                     <label className="text-lg">단어</label>
-                    <input type="text" name="word" className="bg-gray-10 p-2 border rounded-md" required />
+                    <input type="text" name="word" className="bg-gray-10 p-2 border rounded-md" required/>
                 </div>
                 <div className="flex flex-col gap-2">
                     <div className="flex justify-between items-center">

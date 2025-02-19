@@ -1,49 +1,27 @@
 "use server";
 
 import { supabase } from "@/lib/supabase";
-// import { redirect } from "next/navigation";
 import {revalidatePath} from "next/cache";
 import * as XLSX from 'xlsx';
+import {Book} from "@/types/book";
 
+export async function getVocabularyBook(): Promise<Book[]> {
+    const { data } = await supabase.from("books").select();
+    return data || []; // null 방지
+}
 
-export async function createVocabulary(formData: FormData) {
-    // FormData에서 값 추출
-    const word = formData.get("word") as string;
-    const definitions = formData.getAll("definition") as string[];
-    const partsOfSpeech = formData.getAll("partOfSpeech") as string[];
-
-    // 데이터 검증
-    if (!word) {
-        throw new Error("단어를 입력해주세요.");
-    }
-    if (definitions.length === 0 || definitions.some((def) => !def.trim())) {
-        throw new Error("적어도 하나의 뜻을 입력해주세요.");
-    }
-
-    // 뜻과 품사를 객체 배열로 변환
-    const definitionObjects = definitions.map((definition, index) => ({
-        definition,
-        partOfSpeech: partsOfSpeech[index] || "", // 품사가 비어 있을 수 있음
-    }));
+export async function createVocabularyBook(formData: FormData) {
+    const name = formData.get("name") as string;
 
     try {
-        // Supabase에 데이터 삽입
-        const { error } = await supabase.from("vocabularies").insert([
-            {
-                word,
-                definitions: definitionObjects,
-                book: null,
-                chapter: null,
-            },
-        ]);
+        const { error } = await supabase.from("books").insert([{name}]);
 
         if (error) throw new Error(error.message);
 
-        // 성공 시 리다이렉트
         return { success: true };
     } catch (err) {
-        console.error("Error inserting vocabulary:", err);
-        throw new Error("단어 추가 중 오류가 발생했습니다.");
+        console.error("Error inserting vocabulary book:", err);
+        throw new Error("단어장 추가 중 오류가 발생했습니다.");
     }
 }
 

@@ -1,5 +1,5 @@
-import {getVocabularies, deleteVocabulary} from "@/app/actions/vocabulary";
-import AddButton from "@/app/components/addButton";
+import {getVocabularies, deleteVocabulary} from "@/actions/vocabulary";
+import AddButton from "@/components/addButton";
 
 type Definition = {
     definition: string;
@@ -14,7 +14,7 @@ export default async function vocabularyPage() {
             <div className="flex items-center justify-between w-full">
                 <h3
                 className="text-2xl font-bold mb-6 text-blue-dark">단어 목록</h3>
-                <AddButton/>
+                <AddButton path="/vocabulary/add" />
             </div>
             <ul className="flex flex-col items-center bg-gray-100 p-3 h-auto">
             {vocabularies?.map((vocab) => (
