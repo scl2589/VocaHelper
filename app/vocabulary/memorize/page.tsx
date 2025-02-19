@@ -44,7 +44,8 @@ export default function MemorizePage() {
                 <h3 className="text-2xl font-bold mb-6 text-blue-dark">낱말 카드</h3>
                 <AddButton path="/vocabulary/add" />
             </div>
-            <div className="flex flex-col items-center justify-center bg-gray-100 p-3 h-72 rounded-2xl text-2xl mb-2">
+            <div className="flex justify-center mb-2 font-bold text-sm">{order + 1} / {vocabularies.length}</div>
+            <div className="flex flex-col items-center justify-center bg-gray-100 p-3 h-72 rounded-2xl text-2xl mb-5 shadow-xl">
                 <span className="mb-3">{currentWord?.word}</span>
                 {currentWord?.definitions.map((def: Definition) => (
                     <div key={def.definition} className="text-lg">({def.partOfSpeech}) {def.definition}</div>
@@ -52,10 +53,10 @@ export default function MemorizePage() {
             </div>
             <div className="flex flex-row items-center justify-center gap-4">
                 <button onClick={() => handleNavigation('prev')} className="flex flex-row justify-center items-center w-16 border border-solid border-gray-300 rounded-3xl">
-                    <Icon type="arrowLeft" customClassName="text-black size-12"/>
+                    <Icon type="arrowLeft" customClassName="text-gray-600 size-12"/>
                 </button>
                 <button onClick={() => handleNavigation('next')} className="flex flex-row justify-center items-center w-16 border border-solid border-gray-300 rounded-3xl">
-                    <Icon type="arrowRight" customClassName="text-black size-12"/>
+                    <Icon type="arrowRight" customClassName="text-gray-600 size-12"/>
                 </button>
             </div>
         </div>
