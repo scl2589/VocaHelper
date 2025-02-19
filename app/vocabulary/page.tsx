@@ -10,7 +10,7 @@ export default async function vocabularyPage() {
     const vocabularies = await getVocabularies();
 
     return (
-        <div className="p-8">
+        <div>
             <div className="flex items-center justify-between w-full">
                 <h3
                 className="text-2xl font-bold mb-6 text-blue-dark">단어 목록</h3>

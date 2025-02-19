@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import Logo from '@/components/Logo'
 
 
 export const metadata: Metadata = {
@@ -14,11 +15,12 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body
-        className='antialiased'
-      >
-        {children}
-      </body>
+        <body className='p-8'>
+            <header className="flex justify-between items-center">
+                <Logo/>
+            </header>
+            {children}
+        </body>
     </html>
   );
 }

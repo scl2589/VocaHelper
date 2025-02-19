@@ -20,7 +20,7 @@ export default function AddExcelPage() {
     }, [])
 
     return (
-        <div className="p-8">
+        <div>
             <h3 className="text-2xl font-bold mb-6 text-blue-dark">엑셀로 단어 추가하기</h3>
             <form action={(formData) => createVocabularyFromFile(formData)} className="flex flex-col gap-4">
                 <div className="flex flex-col">

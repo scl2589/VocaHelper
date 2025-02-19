@@ -24,7 +24,7 @@ export default function VocabularyBookAddPage() {
 
 
     return (
-        <div className="p-8">
+        <div >
             <h3 className="text-2xl font-bold mb-6 text-blue-dark">단어장 추가</h3>
             <Form onSubmit={handleSubmit} className="flex flex-col gap-4" action={""}>
                 <div className="flex flex-col gap-2">
