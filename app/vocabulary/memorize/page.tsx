@@ -1,12 +1,12 @@
 'use client';
 
-import { useReducer, useEffect, useRef } from 'react';
+import { useReducer, useEffect, useRef, ChangeEvent } from 'react';
 
 import AddButton from '@/components/addButton';
 import WordCard from "@/components/WordCard";
 import NavigationButtons from "@/components/NavigationButtons";
 
-import {getVocabularies, updateVocabulary} from '@/actions/vocabulary';
+import {getVocabulariesByChapters, updateVocabulary} from '@/actions/vocabulary';
 import {getVocabularyBooks} from "@/actions/vocabularyBook";
 import { Vocabulary } from '@/types/vocabulary';
 import {Book} from "@/types/book";
@@ -20,7 +20,7 @@ interface State {
     order: number;
     showDefinition: boolean;
     chapters: Chapter[];
-    chapter: Chapter;
+    selectedChapters: string[];
 }
 
 type Action =
@@ -31,7 +31,8 @@ type Action =
     | { type: 'PREV_WORD' }
     | { type: 'SHUFFLE_VOCABULARIES'}
     | { type: 'INCREMENT_COUNT'; payload: string }
-    | { type: 'SET_CHAPTERS'; payload: Chapter[] };
+    | { type: 'SET_CHAPTERS'; payload: Chapter[] }
+    | { type: 'SET_SELECTED_CHAPTERS'; payload: string[] };
 
 const shuffleArray = <T,>(array: T[]): T[] => {
     const shuffled = [...array];
@@ -42,11 +43,7 @@ const shuffleArray = <T,>(array: T[]): T[] => {
     return shuffled;
 };
 
-const initialState: State = { vocabularies: [], book: '', books: [], chapters: [], chapter: {
-        id: '',
-        name: '',
-        booK_name: ''
-    }, order: 0, showDefinition: false };
+const initialState: State = { vocabularies: [], book: '', books: [], chapters: [], selectedChapters: [], order: 0, showDefinition: false };
 
 function reducer(state: State, action: Action): State {
     switch (action.type) {
@@ -56,6 +53,8 @@ function reducer(state: State, action: Action): State {
             return { ...state, book: action.payload };
         case 'SET_CHAPTERS':
             return { ...state, chapters: action.payload };
+        case 'SET_SELECTED_CHAPTERS':
+            return { ...state, selectedChapters: action.payload };
         case 'SET_VOCABULARIES':
             return { ...state, vocabularies: action.payload };
         case 'NEXT_WORD':
@@ -116,16 +115,20 @@ export default function MemorizePage() {
     useEffect(() => {
         if (!state.book) return;
         (async () => {
-            // 챕터가 선택된 후에 set_vocabularies 하도록 수정 필요
-            const data = await getVocabularies(state.book);
-            dispatch({ type: 'SET_VOCABULARIES', payload: data });
-
             const chapters = await getVocabularyChapters(state.book);
             dispatch({ type: 'SET_CHAPTERS', payload: chapters });
         })();
     }, [state.book]);
 
-    const handleBookSelect = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    useEffect(() => {
+        if (state.selectedChapters.length === 0) return;
+        (async () => {
+            const data = await getVocabulariesByChapters(state.selectedChapters);
+            dispatch({ type: 'SET_VOCABULARIES', payload: data });
+        })();
+    }, [state.selectedChapters]);
+
+    const handleBookSelect = (event: ChangeEvent<HTMLSelectElement>) => {
         const selectedBook = event.target.value;
         dispatch({ type: 'SET_BOOK', payload: selectedBook });
     };
@@ -137,10 +140,15 @@ export default function MemorizePage() {
     const handleUpdateVocabulary = async (word: Vocabulary) => {
         try {
             await updateVocabulary(word);
-            dispatch({ type: 'INCREMENT_COUNT', payload: word.word });  // ✅ 상태 업데이트
+            dispatch({ type: 'INCREMENT_COUNT', payload: word.word });
         } catch (error) {
             console.error('Failed to update vocabulary:', error);
         }
+    };
+
+    const handleChapterSelect = (event: ChangeEvent<HTMLSelectElement>) => {
+        const selectedOptions = Array.from(event.target.selectedOptions, (option) => option.value);
+        dispatch({ type: 'SET_SELECTED_CHAPTERS', payload: selectedOptions });
     };
 
     return (
@@ -161,11 +169,13 @@ export default function MemorizePage() {
                 </div>
                 <div>
                     <label htmlFor="chapter-select" className="mr-2">챕터</label>
-                    <select id="chapter-select" className="bg-gray-10 p-2 border rounded-md" name="chapter"
-                            value={state.chapter || ''}
-                            onChange={handleBookSelect}>
-                        {state.chapters?.map((chapter) => <option key={chapter.name}
-                                                            value={chapter.name}>{chapter.name}</option>)}
+                    <select id="chapter-select" className="bg-gray-10 p-2 border rounded-md w-48" name="chapter"
+                            value={state.selectedChapters}
+                            onChange={handleChapterSelect}
+                            multiple
+                    >
+                        {state.chapters?.map((chapter) => <option key={chapter.id}
+                                                            value={chapter.id}>{chapter.name}</option>)}
                     </select>
                 </div>
 

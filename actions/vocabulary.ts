@@ -62,6 +62,22 @@ export async function getVocabularies(book?: string): Promise<Vocabulary[]> {
     return data || [];
 }
 
+export async function getVocabulariesByChapters(selectedChapters: string[]): Promise<Vocabulary[]> {
+    if (selectedChapters.length === 0) return [];
+
+    const { data, error } = await supabase
+        .from("vocabularies")
+        .select("*, chapters(id, name)")
+        .in("chapter_id", selectedChapters);
+
+    if (error) {
+        console.error("Error fetching vocabularies:", error);
+        return [];
+    }
+
+    return data || [];
+}
+
 export const updateVocabulary = async (data: Vocabulary): Promise<void> => {
     const { error } = await supabase
         .from('vocabularies')
