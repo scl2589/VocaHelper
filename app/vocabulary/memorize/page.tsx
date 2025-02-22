@@ -1,42 +1,86 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import { getVocabularies } from '@/actions/vocabulary';
+import { useReducer, useEffect, useRef } from 'react';
+
 import AddButton from '@/components/addButton';
-import { Definition, Vocabulary } from '@/types/vocabulary';
-import Icon from "@/components/Icon";
+import WordCard from "@/components/WordCard";
+import NavigationButtons from "@/components/NavigationButtons";
+
+import { getVocabularies } from '@/actions/vocabulary';
+import { Vocabulary } from '@/types/vocabulary';
+
+interface State {
+    vocabularies: Vocabulary[];
+    order: number;
+    showDefinition: boolean;
+}
+
+type Action =
+    | { type: 'SET_VOCABULARIES'; payload: Vocabulary[] }
+    | { type: 'NEXT_WORD' }
+    | { type: 'PREV_WORD' }
+    | { type: 'SHUFFLE_VOCABULARIES'};
+
+const shuffleArray = <T,>(array: T[]): T[] => {
+    const shuffled = [...array]; // 원본 배열을 변경하지 않도록 복사
+    for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1)); // 0부터 i까지의 랜덤 인덱스
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]; // swap
+    }
+    return shuffled;
+};
+
+const initialState: State = { vocabularies: [], order: 0, showDefinition: false };
+
+function reducer(state: State, action: Action): State {
+    switch (action.type) {
+        case 'SET_VOCABULARIES':
+            return { ...state, vocabularies: action.payload };
+        case 'NEXT_WORD':
+            return state.showDefinition
+                ? { ...state, showDefinition: false, order: (state.order + 1) % state.vocabularies.length }
+                : { ...state, showDefinition: true };
+        case 'PREV_WORD':
+            return state.showDefinition
+                ? { ...state, showDefinition: false }
+                : { ...state, showDefinition: true, order: (state.order - 1 + state.vocabularies.length) % state.vocabularies.length };
+        case 'SHUFFLE_VOCABULARIES':
+            return {...state, vocabularies: shuffleArray(state.vocabularies), order: 0, showDefinition: false }
+        default:
+            return state;
+    }
+}
 
 export default function MemorizePage() {
-    const [vocabularies, setVocabularies] = useState<Vocabulary[]>([]);
-    const [order, setOrder] = useState(0);
+    const [state, dispatch] = useReducer(reducer, initialState);
+    const { vocabularies, order, showDefinition } = state;
+    const currentWord = vocabularies[order];
+    const handleNavigation = (direction: 'next' | 'prev') => dispatch({ type: direction === 'next' ? 'NEXT_WORD' : 'PREV_WORD' });
+    const keyDownRef = useRef(handleNavigation);
+
+    useEffect(() => {
+        keyDownRef.current = handleNavigation;
+    });
+
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'ArrowRight') keyDownRef.current('next');
+            if (e.key === 'ArrowLeft') keyDownRef.current('prev');
+        };
+        document.addEventListener('keydown', handleKeyDown);
+        return () => document.removeEventListener('keydown', handleKeyDown);
+    }, []);
 
     useEffect(() => {
         (async () => {
             const data = await getVocabularies();
-            setVocabularies(data);
+            dispatch({ type: 'SET_VOCABULARIES', payload: data });
         })();
     }, []);
 
-    const handleNavigation = useCallback((direction: 'next' | 'prev') => {
-        setOrder((prevOrder) => {
-            const newOrder = direction === 'next'
-                ? (prevOrder + 1) % vocabularies.length
-                : (prevOrder - 1 + vocabularies.length) % vocabularies.length;
-            return newOrder;
-        });
-    }, [vocabularies]);
-
-    useEffect(() => {
-        const handleKeyDown = (e: KeyboardEvent) => {
-            if (e.key === 'ArrowRight') handleNavigation('next');
-            if (e.key === 'ArrowLeft') handleNavigation('prev');
-        };
-
-        document.addEventListener('keydown', handleKeyDown);
-        return () => document.removeEventListener('keydown', handleKeyDown);
-    }, [handleNavigation]);
-
-    const currentWord = vocabularies[order];
+    const shuffleVocabularies = () => {
+        dispatch({ type: 'SHUFFLE_VOCABULARIES' });
+    };
 
     return (
         <div>
@@ -45,20 +89,8 @@ export default function MemorizePage() {
                 <AddButton path="/vocabulary/add" />
             </div>
             <div className="flex justify-center mb-2 font-bold text-sm">{order + 1} / {vocabularies.length}</div>
-            <div className="flex flex-col items-center justify-center bg-gray-100 p-3 h-72 rounded-2xl text-2xl mb-5 shadow-xl">
-                <span className="mb-3">{currentWord?.word}</span>
-                {currentWord?.definitions.map((def: Definition) => (
-                    <div key={def.definition} className="text-lg">({def.partOfSpeech}) {def.definition}</div>
-                ))}
-            </div>
-            <div className="flex flex-row items-center justify-center gap-4">
-                <button onClick={() => handleNavigation('prev')} className="flex flex-row justify-center items-center w-16 border border-solid border-gray-300 rounded-3xl">
-                    <Icon type="arrowLeft" customClassName="text-gray-600 size-12"/>
-                </button>
-                <button onClick={() => handleNavigation('next')} className="flex flex-row justify-center items-center w-16 border border-solid border-gray-300 rounded-3xl">
-                    <Icon type="arrowRight" customClassName="text-gray-600 size-12"/>
-                </button>
-            </div>
+            <WordCard word={currentWord} showDefinition={showDefinition} />
+            <NavigationButtons word={currentWord} handleNavigation={handleNavigation} shuffleVocabularies={shuffleVocabularies} />
         </div>
     );
 }

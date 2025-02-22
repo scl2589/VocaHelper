@@ -13,6 +13,7 @@ export type Vocabulary = {
     chapter: string;
     memorized: boolean;
     definitions: Definition[],
+    count: number;
 }
 
 
