@@ -10,6 +10,8 @@ import {getVocabularies, updateVocabulary} from '@/actions/vocabulary';
 import {getVocabularyBooks} from "@/actions/vocabularyBook";
 import { Vocabulary } from '@/types/vocabulary';
 import {Book} from "@/types/book";
+import {Chapter} from '@/types/chapter';
+import {getVocabularyChapters} from "@/actions/vocabularyChapter";
 
 interface State {
     vocabularies: Vocabulary[];
@@ -17,6 +19,8 @@ interface State {
     book: string;
     order: number;
     showDefinition: boolean;
+    chapters: Chapter[];
+    chapter: Chapter;
 }
 
 type Action =
@@ -26,18 +30,23 @@ type Action =
     | { type: 'NEXT_WORD' }
     | { type: 'PREV_WORD' }
     | { type: 'SHUFFLE_VOCABULARIES'}
-    | { type: 'INCREMENT_COUNT'; payload: string };
+    | { type: 'INCREMENT_COUNT'; payload: string }
+    | { type: 'SET_CHAPTERS'; payload: Chapter[] };
 
 const shuffleArray = <T,>(array: T[]): T[] => {
-    const shuffled = [...array]; // 원본 배열을 변경하지 않도록 복사
+    const shuffled = [...array];
     for (let i = shuffled.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1)); // 0부터 i까지의 랜덤 인덱스
-        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]; // swap
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
     }
     return shuffled;
 };
 
-const initialState: State = { vocabularies: [], book: '', books: [], order: 0, showDefinition: false };
+const initialState: State = { vocabularies: [], book: '', books: [], chapters: [], chapter: {
+        id: '',
+        name: '',
+        booK_name: ''
+    }, order: 0, showDefinition: false };
 
 function reducer(state: State, action: Action): State {
     switch (action.type) {
@@ -45,6 +54,8 @@ function reducer(state: State, action: Action): State {
             return { ...state, books: action.payload };
         case 'SET_BOOK':
             return { ...state, book: action.payload };
+        case 'SET_CHAPTERS':
+            return { ...state, chapters: action.payload };
         case 'SET_VOCABULARIES':
             return { ...state, vocabularies: action.payload };
         case 'NEXT_WORD':
@@ -91,11 +102,13 @@ export default function MemorizePage() {
 
     useEffect(() => {
         (async () => {
-            const data = await getVocabularyBooks();
-            dispatch({ type: 'SET_BOOKS', payload: data });
+            const books = await getVocabularyBooks();
+            dispatch({ type: 'SET_BOOKS', payload: books });
 
-            if (data.length > 0) {
-                dispatch({ type: 'SET_BOOK', payload: data[0].name });
+            if (books.length > 0) {
+                dispatch({ type: 'SET_BOOK', payload: books[0].name });
+                const chapters = await getVocabularyChapters(books[0].name);
+                dispatch({ type: 'SET_CHAPTERS', payload: chapters})
             }
         })();
     }, []);
@@ -103,8 +116,12 @@ export default function MemorizePage() {
     useEffect(() => {
         if (!state.book) return;
         (async () => {
+            // 챕터가 선택된 후에 set_vocabularies 하도록 수정 필요
             const data = await getVocabularies(state.book);
             dispatch({ type: 'SET_VOCABULARIES', payload: data });
+
+            const chapters = await getVocabularyChapters(state.book);
+            dispatch({ type: 'SET_CHAPTERS', payload: chapters });
         })();
     }, [state.book]);
 
@@ -135,10 +152,20 @@ export default function MemorizePage() {
             <div className="flex items-center justify-between w-full">
                 <div>
                     <label htmlFor="book-select" className="mr-2">단어장</label>
-                    <select id="book-select" className="bg-gray-10 p-2 border rounded-md" name="book" value={state.book || ''}
+                    <select id="book-select" className="bg-gray-10 p-2 border rounded-md" name="book"
+                            value={state.book || ''}
                             onChange={handleBookSelect}>
                         {books?.map((book: Book) => <option key={book.name}
                                                             value={book.name}>{book.name}</option>)}
+                    </select>
+                </div>
+                <div>
+                    <label htmlFor="chapter-select" className="mr-2">챕터</label>
+                    <select id="chapter-select" className="bg-gray-10 p-2 border rounded-md" name="chapter"
+                            value={state.chapter || ''}
+                            onChange={handleBookSelect}>
+                        {state.chapters?.map((chapter) => <option key={chapter.name}
+                                                            value={chapter.name}>{chapter.name}</option>)}
                     </select>
                 </div>
 
@@ -149,7 +176,8 @@ export default function MemorizePage() {
                         className="flex justify-center mb-2 font-bold text-sm">{order + 1} / {vocabularies.length}</div>
                     <WordCard word={currentWord} showDefinition={showDefinition}/>
                     <NavigationButtons word={currentWord} handleNavigation={handleNavigation}
-                                   shuffleVocabularies={shuffleVocabularies} onUpdateVocabulary={handleUpdateVocabulary}/>
+                                       shuffleVocabularies={shuffleVocabularies}
+                                       onUpdateVocabulary={handleUpdateVocabulary}/>
                 </>
             ) : (
                 <div>해당 단어장에 속하는 단어가 없습니다. </div>
