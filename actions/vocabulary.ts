@@ -51,14 +51,14 @@ export async function getVocabularies(book?: string): Promise<Vocabulary[]> {
     const { data, error } = await supabase
         .from("vocabularies")
         .select("*, chapters(name)")
-        // .eq("book", book);
+        .eq("book", book);
 
     if (error) {
         console.error("Error fetching vocabularies:", error);
         return [];
     }
 
-    console.log(data); // Check the structure of the data
+    console.log(data);
     return data || [];
 }
 

@@ -4,7 +4,7 @@ import { createVocabularyFromFile } from "@/actions/vocabulary";
 import { useFormStatus } from "react-dom";
 import Link from "next/link";
 import {useEffect, useState} from "react";
-import {getVocabularyBook} from "@/actions/vocabularyBook";
+import {getVocabularyBooks} from "@/actions/vocabularyBook";
 import {Book} from '@/types/book'
 
 export default function AddExcelPage() {
@@ -14,7 +14,7 @@ export default function AddExcelPage() {
 
     useEffect(() => {
         (async() => {
-            const data = await getVocabularyBook();
+            const data = await getVocabularyBooks();
             setBooks(data);
         })();
     }, [])

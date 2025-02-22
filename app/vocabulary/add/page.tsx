@@ -2,7 +2,7 @@
 
 import { useState, FormEvent, useEffect } from "react";
 import { createVocabulary } from "@/actions/vocabulary";
-import { getVocabularyBook } from "@/actions/vocabularyBook";
+import { getVocabularyBooks } from "@/actions/vocabularyBook";
 import Form from 'next/form';
 import {useRouter} from "next/navigation";
 import Link from "next/link";
@@ -15,7 +15,7 @@ export default function AddPage() {
 
     useEffect(() => {
         (async() => {
-            const data = await getVocabularyBook();
+            const data = await getVocabularyBooks();
             setBooks(data);
         })();
     }, [])

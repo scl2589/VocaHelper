@@ -1,8 +1,8 @@
-import {getVocabularyBook} from "@/actions/vocabularyBook";
+import {getVocabularyBooks} from "@/actions/vocabularyBook";
 import AddButton from "@/components/addButton";
 
 export default async function Page() {
-    const books = await getVocabularyBook();
+    const books = await getVocabularyBooks();
 
     return (
         <div>
