@@ -47,18 +47,14 @@ export async function createVocabulary(formData: FormData) {
     }
 }
 
-export async function getVocabularies(book?: string): Promise<Vocabulary[]> {
-    const { data, error } = await supabase
-        .from("vocabularies")
-        .select("*, chapters(name)")
-        .eq("book", book);
+export async function getVocabularies(): Promise<Vocabulary[]> {
+    const { data, error } = await supabase.from("vocabularies").select();
 
     if (error) {
         console.error("Error fetching vocabularies:", error);
         return [];
     }
 
-    console.log(data);
     return data || [];
 }
 

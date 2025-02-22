@@ -151,7 +151,7 @@ export default function MemorizePage() {
         dispatch({
             type: 'SET_SELECTED_CHAPTERS',
             payload: state.selectedChapters.includes(selectedValue)
-                ? state.selectedChapters.filter(id => id !== selectedValue) 
+                ? state.selectedChapters.filter(id => id !== selectedValue)
                 : [...state.selectedChapters, selectedValue],
         });
     };
