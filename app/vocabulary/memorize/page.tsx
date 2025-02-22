@@ -147,8 +147,13 @@ export default function MemorizePage() {
     };
 
     const handleChapterSelect = (event: ChangeEvent<HTMLSelectElement>) => {
-        const selectedOptions = Array.from(event.target.selectedOptions, (option) => option.value);
-        dispatch({ type: 'SET_SELECTED_CHAPTERS', payload: selectedOptions });
+        const selectedValue = event.target.value;
+        dispatch({
+            type: 'SET_SELECTED_CHAPTERS',
+            payload: state.selectedChapters.includes(selectedValue)
+                ? state.selectedChapters.filter(id => id !== selectedValue) 
+                : [...state.selectedChapters, selectedValue],
+        });
     };
 
     return (
