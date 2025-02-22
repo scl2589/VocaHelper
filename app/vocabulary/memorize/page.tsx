@@ -6,7 +6,7 @@ import AddButton from '@/components/addButton';
 import WordCard from "@/components/WordCard";
 import NavigationButtons from "@/components/NavigationButtons";
 
-import { getVocabularies } from '@/actions/vocabulary';
+import {getVocabularies, updateVocabulary} from '@/actions/vocabulary';
 import {getVocabularyBooks} from "@/actions/vocabularyBook";
 import { Vocabulary } from '@/types/vocabulary';
 import {Book} from "@/types/book";
@@ -25,7 +25,8 @@ type Action =
     | { type: 'SET_VOCABULARIES'; payload: Vocabulary[] }
     | { type: 'NEXT_WORD' }
     | { type: 'PREV_WORD' }
-    | { type: 'SHUFFLE_VOCABULARIES'};
+    | { type: 'SHUFFLE_VOCABULARIES'}
+    | { type: 'INCREMENT_COUNT'; payload: string };
 
 const shuffleArray = <T,>(array: T[]): T[] => {
     const shuffled = [...array]; // 원본 배열을 변경하지 않도록 복사
@@ -56,6 +57,13 @@ function reducer(state: State, action: Action): State {
                 : { ...state, showDefinition: true, order: (state.order - 1 + state.vocabularies.length) % state.vocabularies.length };
         case 'SHUFFLE_VOCABULARIES':
             return {...state, vocabularies: shuffleArray(state.vocabularies), order: 0, showDefinition: false }
+        case 'INCREMENT_COUNT':
+            return {
+                ...state,
+                vocabularies: state.vocabularies.map(vocab =>
+                    vocab.word === action.payload ? { ...vocab, count: vocab.count + 1 } : vocab
+                )
+            };
         default:
             return state;
     }
@@ -109,6 +117,15 @@ export default function MemorizePage() {
         dispatch({ type: 'SHUFFLE_VOCABULARIES' });
     };
 
+    const handleUpdateVocabulary = async (word: Vocabulary) => {
+        try {
+            await updateVocabulary(word);
+            dispatch({ type: 'INCREMENT_COUNT', payload: word.word });  // ✅ 상태 업데이트
+        } catch (error) {
+            console.error('Failed to update vocabulary:', error);
+        }
+    };
+
     return (
         <div>
             <div className="flex items-center justify-between w-full">
@@ -132,7 +149,7 @@ export default function MemorizePage() {
                         className="flex justify-center mb-2 font-bold text-sm">{order + 1} / {vocabularies.length}</div>
                     <WordCard word={currentWord} showDefinition={showDefinition}/>
                     <NavigationButtons word={currentWord} handleNavigation={handleNavigation}
-                                   shuffleVocabularies={shuffleVocabularies}/>
+                                   shuffleVocabularies={shuffleVocabularies} onUpdateVocabulary={handleUpdateVocabulary}/>
                 </>
             ) : (
                 <div>해당 단어장에 속하는 단어가 없습니다. </div>

@@ -8,13 +8,14 @@ interface NavigationButtonsProps {
     word: Vocabulary;
     handleNavigation: (direction: 'next' | 'prev') => void;
     shuffleVocabularies: () => void;
+    onUpdateVocabulary: (word: Vocabulary) => void;
 }
 
-export default function NavigationButtons({ word, handleNavigation, shuffleVocabularies }: NavigationButtonsProps) {
+export default function NavigationButtons({ word, handleNavigation, shuffleVocabularies, onUpdateVocabulary }: NavigationButtonsProps) {
     return (
         <div className="flex flex-row items-center justify-between w-full">
             <div>
-                <button onClick={() => updateVocabulary(word)}
+                <button onClick={() => onUpdateVocabulary(word)}
                         className="flex flex-row justify-center items-center w-16 h-12 border border-solid border-gray-300 rounded-3xl">
                     ✔ {word?.count}
                 </button>
