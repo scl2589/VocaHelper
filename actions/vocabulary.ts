@@ -161,12 +161,79 @@ export async function createVocabularyFromFile(formData: FormData): Promise<void
             word: item["단어"],
             definitions,
             book,
-            chapter
+            chapter,
+            count: 0,
         };
     });
 
     // 데이터 저장
     const { error } = await supabase.from("vocabularies").insert(words);
+
+    if (error) {
+        throw new Error(`단어 추가 중 오류 발생: ${error.message}`);
+    }
+
+    revalidatePath("/");
+}
+
+export async function createVocabularyFromMultipleFileSheets(formData: FormData): Promise<void> {
+    const book = formData.get("book") as string;
+    const file = formData.get("file") as File;
+
+    if (!file) {
+        throw new Error("파일이 필요합니다.");
+    }
+
+    const arrayBuffer = await file.arrayBuffer();
+    const workbook = XLSX.read(arrayBuffer, { type: "buffer" });
+
+    const allWords: Vocabulary[] = [];
+
+    for (const sheetName of workbook.SheetNames) {
+        const sheet = workbook.Sheets[sheetName];
+        const json: VocabularyRow[] = XLSX.utils.sheet_to_json(sheet);
+
+        // ✅ 해당 챕터가 존재하는지 확인
+        let chapter; // chapter는 변경될 가능성이 있으므로 let 유지
+        const { data: existingChapter, error: chapterError } = await supabase
+            .from("chapters")
+            .select("id")
+            .eq("book_name", book)
+            .eq("name", sheetName)
+            .single();
+
+        if (chapterError && chapterError.code === "PGRST116") {
+            // ✅ 존재하지 않는다면 새로운 챕터 생성
+            const { data: newChapter, error: newChapterError } = await supabase
+                .from("chapters")
+                .insert([{ book_name: book, name: sheetName }])
+                .select("id")
+                .single();
+
+            if (newChapterError) {
+                throw new Error(`챕터 추가 중 오류 발생: ${newChapterError.message}`);
+            }
+
+            chapter = newChapter;
+        } else if (chapterError) {
+            throw new Error(`챕터 조회 중 오류 발생: ${chapterError.message}`);
+        } else {
+            chapter = existingChapter;
+        }
+
+        const words = json.map((item: VocabularyRow) => ({
+            word: item["단어"],
+            definitions: [{ definition: item["의미"] }],
+            book,
+            chapter_id: chapter?.id,
+            count: 0,
+        }));
+
+        allWords.push(...words);
+    }
+
+    // ✅ 단어 데이터 삽입
+    const { error } = await supabase.from("vocabularies").insert(allWords);
 
     if (error) {
         throw new Error(`단어 추가 중 오류 발생: ${error.message}`);

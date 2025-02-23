@@ -2,16 +2,16 @@ import {Book} from "@/types/book";
 
 export type Definition = {
     definition: string;
-    partOfSpeech: string;
+    partOfSpeech?: string;
 }
 
 export type Vocabulary = {
-    id: number;
-    createdAt: Date;
+    id?: number;
+    createdAt?: Date;
     word: string;
-    book: Book;
-    chapter: string;
-    memorized: boolean;
+    book: string;
+    chapterId?: string;
+    memorized?: boolean;
     definitions: Definition[],
     count: number;
 }
