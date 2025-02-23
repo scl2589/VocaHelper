@@ -3,7 +3,7 @@
 import { supabase } from "@/lib/supabase";
 import {revalidatePath} from "next/cache";
 import * as XLSX from 'xlsx';
-import {Vocabulary} from "@/types/vocabulary";
+import {Vocabulary, CreateVocabulary} from "@/types/vocabulary";
 
 
 export async function createVocabulary(formData: FormData) {
@@ -215,7 +215,7 @@ export async function createVocabularyFromMultipleFileSheets(formData: FormData)
     const arrayBuffer = await file.arrayBuffer();
     const workbook = XLSX.read(arrayBuffer, { type: "buffer" });
 
-    const allWords: Vocabulary[] = [];
+    const allWords: CreateVocabulary[] = [];
 
     for (const sheetName of workbook.SheetNames) {
         const sheet = workbook.Sheets[sheetName];

@@ -3,9 +3,17 @@ export type Definition = {
     partOfSpeech?: string;
 }
 
+export type CreateVocabulary = {
+    word: string;
+    book: string;
+    chapterId?: string;
+    definitions: Definition[],
+    count: number;
+}
+
 export type Vocabulary = {
     id: string;
-    createdAt?: Date;
+    createdAt: Date;
     word: string;
     book: string;
     chapterId?: string;
