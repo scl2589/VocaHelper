@@ -5,6 +5,7 @@ import { useReducer, useEffect, useRef, ChangeEvent } from 'react';
 import AddButton from '@/components/addButton';
 import WordCard from "@/components/WordCard";
 import NavigationButtons from "@/components/NavigationButtons";
+import Title from "@/components/Title";
 
 import {getVocabulariesByChapters, updateVocabulary} from '@/actions/vocabulary';
 import {getVocabularyBooks} from "@/actions/vocabularyBook";
@@ -164,7 +165,7 @@ export default function MemorizePage() {
     return (
         <div className="@container">
             <div className="flex items-center justify-between w-full mb-2">
-                <h3 className="text-xl md:text-2xl font-bold text-blue-dark">단어 외우기</h3>
+                <Title title="단어 외우기"/>
                 <AddButton path="/vocabulary/add" />
             </div>
             <div className="flex flex-col md:flex-row items-start justify-between w-full mb-2">

@@ -25,7 +25,6 @@
   --color-pink-light: #FFCAD4;
   --color-pink-medium: #FF8082;
   --color-pink-dark: #FF407D;
-
 }
 
 @media (prefers-color-scheme: dark) {
@@ -36,7 +35,20 @@
     --color-green-medium: #8C9A8A; /* Darker Green for dark mode */
     --color-yellow-medium: #D2B49E; /* Darker Yellow for dark mode */
     --color-pink-medium: #B97A7C;
+    color: #c5d1e1;
   }
+  select {
+    color: black;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    color: black;
+  }
+
+  input {
+    color: black
+  }
+
 }
 
 body {

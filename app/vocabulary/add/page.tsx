@@ -7,6 +7,7 @@ import Form from 'next/form';
 import {useRouter} from "next/navigation";
 import Link from "next/link";
 import {Book} from '@/types/book'
+import Title from "@/components/Title";
 
 export default function AddPage() {
     const [definitions, setDefinitions] = useState([{ id: 0, partOfSpeech: "", definition: "" }]);
@@ -58,7 +59,7 @@ export default function AddPage() {
 
     return (
         <div>
-            <h3 className="text-2xl font-bold mb-6 text-blue-dark">단어 추가</h3>
+            <Title title="단어 추가"/>
             <Form onSubmit={handleSubmit} className="flex flex-col gap-4" action={""}>
                 <div className="flex flex-col gap-2">
                     <label className="text-lg">단어장</label>

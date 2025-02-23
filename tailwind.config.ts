@@ -34,6 +34,8 @@ export default {
           medium: 'var(--color-pink-medium)',
           dark: 'var(--color-pink-dark)',
         },
+        darkText: '#e2e8f0',
+        darkWhiteBgText: 'black'
       },
     },
   },

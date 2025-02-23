@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { getVocabularyBooks } from "@/actions/vocabularyBook";
 import { Book } from '@/types/book';
+import Title from "@/components/Title";
 
 export default function AddExcelPage() {
     const router = useRouter();
@@ -38,7 +39,7 @@ export default function AddExcelPage() {
 
     return (
         <div>
-            <h3 className="text-2xl font-bold mb-6 text-blue-dark">엑셀로 단어 추가하기</h3>
+            <Title title="엑셀로 단어 추가하기"/>
             <form action={handleFileSubmit} className="flex flex-col gap-4">
                 <div className="flex flex-col">
                     <label className="text-lg mb-2">단어장</label>

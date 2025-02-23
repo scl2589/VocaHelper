@@ -8,7 +8,7 @@ export default function Logo() {
                 fill="none"
                 xmlns="http://www.w3.org/2000/svg"
             >
-                <text x="0" y="35" fontSize="30" fill="#333">Voca Helper</text>
+                <text x="0" y="35" fontSize="30" fill="currentColor">Voca Helper</text>
             </svg>
         </Link>
     );
