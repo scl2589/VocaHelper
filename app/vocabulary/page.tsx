@@ -13,9 +13,9 @@ export default async function vocabularyPage() {
                 className="text-2xl font-bold mb-6 text-blue-dark">단어 목록</h3>
                 <AddButton path="/vocabulary/add" />
             </div>
-            <ul className="flex flex-col items-center bg-gray-100 p-3 h-auto">
+            <ul className="flex flex-col items-center bg-gray-100 md:p-3 h-auto">
             {vocabularies?.map((vocab) => (
-                    <li key={vocab.id} className="w-5/6 bg-white mb-3 p-3 rounded-md shadow-md ">
+                    <li key={vocab.id} className="w-full md:w-5/6 bg-white mb-3 md:p-3 rounded-md shadow-md ">
                         <div className="flex flex-row items-center">
                             <div className="w-40 border-r-2">
                                 {vocab.word}

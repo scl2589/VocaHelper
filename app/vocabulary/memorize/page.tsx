@@ -56,7 +56,7 @@ function reducer(state: State, action: Action): State {
         case 'SET_SELECTED_CHAPTERS':
             return { ...state, selectedChapters: action.payload };
         case 'SET_VOCABULARIES':
-            return { ...state, vocabularies: action.payload };
+            return { ...state, vocabularies: action.payload, order: 0 };
         case 'NEXT_WORD':
             return state.showDefinition
                 ? { ...state, showDefinition: false, order: (state.order + 1) % state.vocabularies.length }
@@ -117,6 +117,10 @@ export default function MemorizePage() {
         (async () => {
             const chapters = await getVocabularyChapters(state.book);
             dispatch({ type: 'SET_CHAPTERS', payload: chapters });
+            dispatch({
+                type: 'SET_SELECTED_CHAPTERS',
+                payload: []
+            });
         })();
     }, [state.book]);
 
@@ -125,6 +129,7 @@ export default function MemorizePage() {
         (async () => {
             const data = await getVocabulariesByChapters(state.selectedChapters);
             dispatch({ type: 'SET_VOCABULARIES', payload: data });
+            dispatch({ type: 'SHUFFLE_VOCABULARIES' });
         })();
     }, [state.selectedChapters]);
 
@@ -157,14 +162,14 @@ export default function MemorizePage() {
     };
 
     return (
-        <div>
-            <div className="flex items-center justify-between w-full">
-                <h3 className="text-2xl font-bold mb-6 text-blue-dark">낱말 카드</h3>
+        <div className="@container">
+            <div className="flex items-center justify-between w-full mb-2">
+                <h3 className="text-xl md:text-2xl font-bold text-blue-dark">단어 외우기</h3>
                 <AddButton path="/vocabulary/add" />
             </div>
-            <div className="flex items-center justify-between w-full">
-                <div>
-                    <label htmlFor="book-select" className="mr-2">단어장</label>
+            <div className="flex flex-col md:flex-row items-start justify-between w-full mb-2">
+                <div className="flex flex-row mb-2 md:mb-0">
+                    <label htmlFor="book-select" className="mr-2 block w-20">단어장</label>
                     <select id="book-select" className="bg-gray-10 p-2 border rounded-md" name="book"
                             value={state.book || ''}
                             onChange={handleBookSelect}>
@@ -172,8 +177,8 @@ export default function MemorizePage() {
                                                             value={book.name}>{book.name}</option>)}
                     </select>
                 </div>
-                <div>
-                    <label htmlFor="chapter-select" className="mr-2">챕터</label>
+                <div className="flex flex-row">
+                    <label htmlFor="chapter-select" className="mr-2 block w-20">챕터</label>
                     <select id="chapter-select" className="bg-gray-10 p-2 border rounded-md w-48" name="chapter"
                             value={state.selectedChapters}
                             onChange={handleChapterSelect}

@@ -16,9 +16,6 @@ export default function Home() {
               <Link href="/vocabulary/books">단어책 보러가기</Link>
           </button>
           <button className="text-2xl">
-              <Link href="/vocabulary/books/add">단어책 추가하기</Link>
-          </button>
-          <button className="text-2xl">
               <Link href="/vocabulary/memorize">단어 외우러 가기</Link>
           </button>
       </div>

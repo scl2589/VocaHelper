@@ -11,7 +11,7 @@ export default function WordCard({ word, showDefinition }: WordCardProps) {
             <span className="mb-3">{word?.word}</span>
             {showDefinition && word?.definitions.map((def: Definition) => (
                 <div key={def.definition} className="text-lg">
-                    {def?.partOfSpeech && def.partOfSpeech} {def.definition}
+                    {def?.partOfSpeech && <>({def.partOfSpeech})</>} {def.definition}
                 </div>
             ))}
         </div>

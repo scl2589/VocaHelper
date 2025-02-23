@@ -15,7 +15,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-        <body className='p-8'>
+        <body className="p-2 md:p-8">
             <header className="flex justify-between items-center">
                 <Logo/>
             </header>

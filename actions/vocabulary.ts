@@ -141,6 +141,34 @@ export async function createVocabularyFromFile(formData: FormData): Promise<void
     // 엑셀 데이터를 JSON으로 변환
     const json: VocabularyRow[] = XLSX.utils.sheet_to_json(sheet);
 
+    // ✅ 해당 챕터가 존재하는지 확인
+    let selectedChapter;
+    const { data: existingChapter, error: chapterError } = await supabase
+        .from("chapters")
+        .select("id")
+        .eq("book_name", book)
+        .eq("name", chapter)
+        .single();
+
+    if (chapterError && chapterError.code === "PGRST116") {
+        // ✅ 존재하지 않는다면 새로운 챕터 생성
+        const { data: newChapter, error: newChapterError } = await supabase
+            .from("chapters")
+            .insert([{ book_name: book, name: chapter }])
+            .select("id")
+            .single();
+
+        if (newChapterError) {
+            throw new Error(`챕터 추가 중 오류 발생: ${newChapterError.message}`);
+        }
+
+        selectedChapter = newChapter;
+    } else if (chapterError) {
+        throw new Error(`챕터 조회 중 오류 발생: ${chapterError.message}`);
+    } else {
+        selectedChapter = existingChapter;
+    }
+
     // 단어 데이터 파싱
     const words = json.map((item) => {
         const definitions: Definition[] = [];
@@ -161,7 +189,7 @@ export async function createVocabularyFromFile(formData: FormData): Promise<void
             word: item["단어"],
             definitions,
             book,
-            chapter,
+            chapter_id: selectedChapter?.id,
             count: 0,
         };
     });
