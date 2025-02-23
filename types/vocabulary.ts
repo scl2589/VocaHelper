@@ -1,12 +1,10 @@
-import {Book} from "@/types/book";
-
 export type Definition = {
     definition: string;
     partOfSpeech?: string;
 }
 
 export type Vocabulary = {
-    id?: number;
+    id: string;
     createdAt?: Date;
     word: string;
     book: string;
