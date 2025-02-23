@@ -1,9 +1,6 @@
 import {Vocabulary} from "@/types/vocabulary";
 import Icon from "@/components/Icon";
 
-import { updateVocabulary } from '@/actions/vocabulary';
-
-
 interface NavigationButtonsProps {
     word: Vocabulary;
     handleNavigation: (direction: 'next' | 'prev') => void;
