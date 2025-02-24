@@ -4,10 +4,9 @@ import { supabase } from "@/lib/supabase";
 import {revalidatePath} from "next/cache";
 import * as XLSX from 'xlsx';
 import {Book} from "@/types/book";
-import {Vocabulary} from "@/types/vocabulary";
 
 export async function getVocabularyBooks(): Promise<Book[]> {
-    const { data } = await supabase.from("books").select();
+    const { data } = await supabase.from("books").select().order("name", {ascending: true});
     return data || [];
 }
 
