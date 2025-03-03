@@ -111,6 +111,7 @@ export default function MemorizePage() {
         const handleKeyDown = (e: KeyboardEvent) => {
             if (e.key === 'ArrowRight') keyDownRef.current('next');
             if (e.key === 'ArrowLeft') keyDownRef.current('prev');
+            if (e.key === ' ') dispatch({type: 'SET_IS_PRONOUNCED'});
         };
         document.addEventListener('keydown', handleKeyDown);
         return () => document.removeEventListener('keydown', handleKeyDown);
