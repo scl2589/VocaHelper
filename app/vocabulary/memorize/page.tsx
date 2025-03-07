@@ -1,11 +1,12 @@
 'use client';
 
-import { useReducer, useEffect, useRef, ChangeEvent } from 'react';
+import { useState, useEffect, useRef, ChangeEvent, useCallback } from 'react';
 
 import AddButton from '@/components/addButton';
 import WordCard from "@/components/WordCard";
 import NavigationButtons from "@/components/NavigationButtons";
 import Title from "@/components/Title";
+import ChapterCheckbox from '@/components/ChapterCheckbox';
 
 import {getVocabulariesByChapters, updateVocabulary} from '@/actions/vocabulary';
 import {getVocabularyBooks} from "@/actions/vocabularyBook";
@@ -13,30 +14,6 @@ import { Vocabulary } from '@/types/vocabulary';
 import {Book} from "@/types/book";
 import {Chapter} from '@/types/chapter';
 import {getVocabularyChapters} from "@/actions/vocabularyChapter";
-
-interface State {
-    vocabularies: Vocabulary[];
-    books: Book[];
-    book: string;
-    order: number;
-    showDefinition: boolean;
-    chapters: Chapter[];
-    selectedChapters: string[];
-    isPronounced: boolean;
-}
-
-type Action =
-    | { type: 'SET_BOOKS'; payload: Book[] }
-    | { type: 'SET_BOOK'; payload: string }
-    | { type: 'SET_VOCABULARIES'; payload: Vocabulary[] }
-    | { type: 'NEXT_WORD' }
-    | { type: 'PREV_WORD' }
-    | { type: 'SHUFFLE_VOCABULARIES'}
-    | { type: 'INCREMENT_COUNT'; payload: string }
-    | { type: 'SET_CHAPTERS'; payload: Chapter[] }
-    | { type: 'SET_SELECTED_CHAPTERS'; payload: string[] }
-    | { type: 'SET_IS_PRONOUNCED' };
-
 
 const shuffleArray = <T,>(array: T[]): T[] => {
     const shuffled = [...array];
@@ -47,143 +24,142 @@ const shuffleArray = <T,>(array: T[]): T[] => {
     return shuffled;
 };
 
-const initialState: State = { isPronounced: true, vocabularies: [], book: '', books: [], chapters: [], selectedChapters: [], order: 0, showDefinition: false };
-
-function reducer(state: State, action: Action): State {
-    switch (action.type) {
-        case 'SET_BOOKS':
-            return { ...state, books: action.payload };
-        case 'SET_BOOK':
-            return { ...state, book: action.payload };
-        case 'SET_CHAPTERS':
-            return { ...state, chapters: action.payload };
-        case 'SET_SELECTED_CHAPTERS':
-            return { ...state, selectedChapters: action.payload };
-        case 'SET_VOCABULARIES':
-            return { ...state, vocabularies: action.payload, order: 0 };
-        case 'NEXT_WORD':
-            return state.showDefinition
-                ? { ...state, showDefinition: false, order: (state.order + 1) % state.vocabularies.length }
-                : { ...state, showDefinition: true };
-        case 'PREV_WORD':
-            return state.showDefinition
-                ? { ...state, showDefinition: false }
-                : { ...state, showDefinition: true, order: (state.order - 1 + state.vocabularies.length) % state.vocabularies.length };
-        case 'SHUFFLE_VOCABULARIES':
-            return {...state, vocabularies: shuffleArray(state.vocabularies), order: 0, showDefinition: false }
-        case 'INCREMENT_COUNT':
-            return {
-                ...state,
-                vocabularies: state.vocabularies.map(vocab =>
-                    vocab.word === action.payload ? { ...vocab, count: vocab.count + 1 } : vocab
-                )
-            };
-        case 'SET_IS_PRONOUNCED':
-            return {...state, isPronounced: !state.isPronounced };
-        default:
-            return state;
-    }
-}
-
 export default function MemorizePage() {
-    const [state, dispatch] = useReducer(reducer, initialState);
-    const {vocabularies, books, order, showDefinition} = state;
+    const [vocabularies, setVocabularies] = useState<Vocabulary[]>([]);
+    const [books, setBooks] = useState<Book[]>([]);
+    const [book, setBook] = useState('');
+    const [order, setOrder] = useState(0);
+    const [showDefinition, setShowDefinition] = useState(false);
+    const [chapters, setChapters] = useState<Chapter[]>([]);
+    const [selectedChapters, setSelectedChapters] = useState<string[]>([]);
+    const [isPronounced, setIsPronounced] = useState(true);
+    
     const currentWord = vocabularies[order];
-    const handleNavigation = (direction: 'next' | 'prev') => dispatch({type: direction === 'next' ? 'NEXT_WORD' : 'PREV_WORD'});
-    const keyDownRef = useRef(handleNavigation);
-
-    const speakWord = (text: string) => {
+    
+    const handleNavigation = useCallback((direction: 'next' | 'prev') => {
+        if (direction === 'next') {
+            if (showDefinition) {
+                setShowDefinition(false);
+                setOrder((prevOrder) => (prevOrder + 1) % vocabularies.length);
+            } else {
+                setShowDefinition(true);
+            }
+        } else { // prev
+            if (showDefinition) {
+                setShowDefinition(false);
+            } else {
+                setShowDefinition(true);
+                setOrder((prevOrder) => (prevOrder - 1 + vocabularies.length) % vocabularies.length);
+            }
+        }
+    }, [showDefinition, vocabularies.length]);
+    
+    const speakWord = useCallback((text: string) => {
+        if (!isPronounced) return;
+        
         const utterance = new SpeechSynthesisUtterance(text);
         utterance.lang = 'en-US';
-        speechSynthesis.speak(utterance);
-    };
+        utterance.rate = 0.8;
+        window.speechSynthesis.speak(utterance);
+    }, [isPronounced]);
+    
+    const shuffleVocabularies = useCallback(() => {
+        setVocabularies(prev => shuffleArray(prev));
+        setOrder(0);
+        setShowDefinition(false);
+    }, []);
+    
+    const handleClickSpeaker = useCallback(() => {
+        setIsPronounced(prev => !prev);
+        if (!isPronounced && currentWord) {
+            speakWord(currentWord.word);
+        }
+    }, [isPronounced, currentWord, speakWord]);
+    
+    const handleUpdateVocabulary = useCallback(async (word: Vocabulary) => {
+        try {
+            await updateVocabulary(word);
+            setVocabularies(prev => 
+                prev.map(vocab => 
+                    vocab.word === word.word ? { ...vocab, count: vocab.count + 1 } : vocab
+                )
+            );
+        } catch (error) {
+            console.error('Failed to update vocabulary:', error);
+        }
+    }, []);
+    
+    const handleChapterToggle = useCallback((chapterId: string, isChecked: boolean) => {
+        setSelectedChapters(prev => 
+            isChecked
+                ? [...prev, chapterId]
+                : prev.filter(id => id !== chapterId)
+        );
+    }, []);
 
-    useEffect(() => {
-        if (!state.isPronounced) return;
-        speakWord(currentWord?.word)
-    }, [currentWord, state.showDefinition]);
-
+    const keyDownRef = useRef(handleNavigation);
+    
     useEffect(() => {
         keyDownRef.current = handleNavigation;
-    });
-
+    }, [handleNavigation]);
+    
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
             if (e.key === 'ArrowRight') keyDownRef.current('next');
             if (e.key === 'ArrowLeft') keyDownRef.current('prev');
-            if (e.key === ' ') dispatch({type: 'SET_IS_PRONOUNCED'});
+            if (e.key === ' ') setIsPronounced(prev => !prev);
         };
         document.addEventListener('keydown', handleKeyDown);
         return () => document.removeEventListener('keydown', handleKeyDown);
     }, []);
 
+    // 새로운 단어로 이동하거나 앱이 처음 로드될 때 자동 발음
+    useEffect(() => {
+        if (currentWord && isPronounced && !showDefinition) {
+            speakWord(currentWord.word);
+        }
+    }, [currentWord, isPronounced, showDefinition, speakWord]);
+
+    const handleBookSelect = useCallback((event: ChangeEvent<HTMLSelectElement>) => {
+        const selectedBook = event.target.value;
+        setBook(selectedBook);
+    }, []);
+    
     useEffect(() => {
         (async () => {
             const books = await getVocabularyBooks();
-            dispatch({type: 'SET_BOOKS', payload: books});
-
+            setBooks(books);
+            
             if (books.length > 0) {
-                dispatch({type: 'SET_BOOK', payload: books[0].name});
+                setBook(books[0].name);
                 const chapters = await getVocabularyChapters(books[0].name);
-                dispatch({type: 'SET_CHAPTERS', payload: chapters})
+                setChapters(chapters);
             }
         })();
     }, []);
-
+    
     useEffect(() => {
-        if (!state.book) return;
+        if (!book) return;
+        
         (async () => {
-            const chapters = await getVocabularyChapters(state.book);
-            dispatch({type: 'SET_CHAPTERS', payload: chapters});
-            dispatch({
-                type: 'SET_SELECTED_CHAPTERS',
-                payload: []
-            });
+            const chapters = await getVocabularyChapters(book);
+            setChapters(chapters);
+            setSelectedChapters([]);
         })();
-    }, [state.book]);
-
+    }, [book]);
+    
     useEffect(() => {
-        if (state.selectedChapters.length === 0) return;
+        if (selectedChapters.length === 0) return;
+        
         (async () => {
-            const data = await getVocabulariesByChapters(state.selectedChapters);
-            dispatch({type: 'SET_VOCABULARIES', payload: data});
-            dispatch({type: 'SHUFFLE_VOCABULARIES'});
+            const data = await getVocabulariesByChapters(selectedChapters);
+            setVocabularies(data);
+            setVocabularies(prev => shuffleArray(prev));
+            setOrder(0);
+            setShowDefinition(false);
         })();
-    }, [state.selectedChapters]);
-
-    const handleBookSelect = (event: ChangeEvent<HTMLSelectElement>) => {
-        const selectedBook = event.target.value;
-        dispatch({type: 'SET_BOOK', payload: selectedBook});
-    };
-
-    const shuffleVocabularies = () => {
-        dispatch({type: 'SHUFFLE_VOCABULARIES'});
-    };
-
-    const handleClickSpeaker = () => {
-        dispatch({ type: 'SET_IS_PRONOUNCED'});
-    }
-
-    const handleUpdateVocabulary = async (word: Vocabulary) => {
-        try {
-            await updateVocabulary(word);
-            dispatch({type: 'INCREMENT_COUNT', payload: word.word});
-        } catch (error) {
-            console.error('Failed to update vocabulary:', error);
-        }
-    };
-
-    const handleChapterSelect = (event: ChangeEvent<HTMLSelectElement>) => {
-        const selectedValue = event.target.value;
-        dispatch({
-            type: 'SET_SELECTED_CHAPTERS',
-            payload: state.selectedChapters.includes(selectedValue)
-                ? state.selectedChapters.filter(id => id !== selectedValue)
-                : [...state.selectedChapters, selectedValue],
-        });
-    };
-
-
+    }, [selectedChapters]);
+    
     return (
         <div className="@container">
             <div className="flex items-center justify-between w-full mb-2">
@@ -194,22 +170,19 @@ export default function MemorizePage() {
                 <div className="flex flex-row mb-2 md:mb-0">
                     <label htmlFor="book-select" className="mr-2 block w-20">단어장</label>
                     <select id="book-select" className="bg-gray-10 p-2 border rounded-md" name="book"
-                            value={state.book || ''}
+                            value={book || ''}
                             onChange={handleBookSelect}>
                         {books?.map((book: Book) => <option key={book.name}
                                                             value={book.name}>{book.name}</option>)}
                     </select>
                 </div>
                 <div className="flex flex-row">
-                    <label htmlFor="chapter-select" className="mr-2 block w-20">챕터</label>
-                    <select id="chapter-select" className="bg-gray-10 p-2 border rounded-md w-48" name="chapter"
-                            value={state.selectedChapters}
-                            onChange={handleChapterSelect}
-                            multiple
-                    >
-                        {state.chapters?.map((chapter) => <option key={chapter.id}
-                                                                  value={chapter.id}>{chapter.name}</option>)}
-                    </select>
+                    <label className="mr-2 block w-20">챕터</label>
+                    <div className="bg-gray-10 p-2 border rounded-md max-h-32 md:max-h-40 overflow-y-auto w-64 md:w-80">
+                        {chapters?.map((chapter) => (
+                            <ChapterCheckbox key={chapter.id} chapter={chapter} isSelected={selectedChapters.includes(chapter.id)} onToggle={handleChapterToggle}/>
+                        ))}
+                    </div>
                 </div>
 
             </div>
@@ -218,19 +191,42 @@ export default function MemorizePage() {
                     <div className="flex justify-center items-center mb-2 relative">
                         <div className="font-bold text-sm">{order + 1} / {vocabularies.length}</div>
                         <button onClick={handleClickSpeaker}
-                                className="absolute right-0 text-2xl text-white rounded p-1">
-                            {state.isPronounced ? <span>🔊</span> : <span>🔇</span>}
+                                className="ml-3 p-1 rounded-md hover:bg-gray-20 absolute right-0">
+                            {isPronounced ? (
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                     strokeWidth={1.5}
+                                     stroke="currentColor" className="w-6 h-6">
+                                    <path strokeLinecap="round" strokeLinejoin="round"
+                                          d="M19.114 5.636a9 9 0 0 1 0 12.728M16.463 8.288a5.25 5.25 0 0 1 0 7.424M6.75 8.25l4.72-4.72a.75.75 0 0 1 1.28.53v15.88a.75.75 0 0 1-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.009 9.009 0 0 1 2.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75Z"/>
+                                </svg>
+                            ) : (
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                     stroke-width="1.5" stroke="currentColor" className="w-6 h-6">
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                          d="M17.25 9.75 19.5 12m0 0 2.25 2.25M19.5 12l2.25-2.25M19.5 12l-2.25 2.25m-10.5-6 4.72-4.72a.75.75 0 0 1 1.28.53v15.88a.75.75 0 0 1-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.009 9.009 0 0 1 2.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75Z"/>
+                                </svg>
+                            )}
                         </button>
                     </div>
-                    <WordCard word={currentWord} showDefinition={showDefinition}/>
-                    <NavigationButtons word={currentWord} handleNavigation={handleNavigation}
-                                       shuffleVocabularies={shuffleVocabularies}
-                                       onUpdateVocabulary={handleUpdateVocabulary}/>
+                    <div className="rounded-2xl shadow-lg relative">
+                        <WordCard
+                            word={currentWord}
+                            showDefinition={showDefinition}
+                        />
+                    </div>
+                    <NavigationButtons 
+                        word={currentWord}
+                        handleNavigation={handleNavigation}
+                        onUpdateVocabulary={handleUpdateVocabulary}
+                        shuffleVocabularies={shuffleVocabularies}
+                    />
                 </>
             ) : (
-                <div>해당 단어장에 속하는 단어가 없습니다. </div>
+                <div
+                    className="flex flex-col items-center justify-center h-[300px] rounded-md shadow-lg border border-gray-10">
+                    <div className="text-center text-lg mb-2">단어장과 챕터를 선택하세요.</div>
+                </div>
             )}
-
         </div>
     );
 }
