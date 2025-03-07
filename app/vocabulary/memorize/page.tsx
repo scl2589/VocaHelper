@@ -161,54 +161,78 @@ export default function MemorizePage() {
     }, [selectedChapters]);
     
     return (
-        <div className="@container">
+        <div className="@container min-h-screen">
             <div className="flex items-center justify-between w-full mb-2">
                 <Title title="단어 외우기"/>
                 <AddButton path="/vocabulary/add"/>
             </div>
-            <div className="flex flex-col md:flex-row items-start justify-between w-full mb-2">
+            <div className="flex flex-col md:flex-row items-start justify-between w-full mb-2 min-h-[140px]">
                 <div className="flex flex-row mb-2 md:mb-0">
                     <label htmlFor="book-select" className="mr-2 block w-20">단어장</label>
-                    <select id="book-select" className="bg-gray-10 p-2 border rounded-md" name="book"
+                    <select id="book-select" className="bg-gray-10 p-2 border rounded-md w-64 md:w-80" name="book"
                             value={book || ''}
                             onChange={handleBookSelect}>
+                        <option value="" disabled={books.length > 0}>
+                            {books.length === 0 ? "로드 중..." : "단어장을 선택하세요"}
+                        </option>
                         {books?.map((book: Book) => <option key={book.name}
                                                             value={book.name}>{book.name}</option>)}
                     </select>
                 </div>
                 <div className="flex flex-row">
                     <label className="mr-2 block w-20">챕터</label>
-                    <div className="bg-gray-10 p-2 border rounded-md max-h-32 md:max-h-40 overflow-y-auto w-64 md:w-80">
-                        {chapters?.map((chapter) => (
-                            <ChapterCheckbox key={chapter.id} chapter={chapter} isSelected={selectedChapters.includes(chapter.id)} onToggle={handleChapterToggle}/>
-                        ))}
+                    <div className="bg-gray-10 p-2 border rounded-md overflow-y-auto w-64 md:w-80 h-[120px] md:h-[150px] flex flex-col">
+                        {chapters.length === 0 ? (
+                            <div className="text-sm text-gray-500 flex items-center justify-center h-full w-full flex-grow">
+                                {book ? "로드 중..." : "단어장을 먼저 선택하세요"}
+                            </div>
+                        ) : (
+                            <div className="h-full overflow-y-auto">
+                                {chapters.map((chapter) => (
+                                    <ChapterCheckbox 
+                                        key={chapter.id} 
+                                        chapter={chapter} 
+                                        isSelected={selectedChapters.includes(chapter.id)} 
+                                        onToggle={handleChapterToggle}
+                                    />
+                                ))}
+                            </div>
+                        )}
                     </div>
                 </div>
-
+            </div>
+            <div>
+                {vocabularies.length > 0 ? (
+                    <>
+                        <div className="flex justify-center items-center mb-2 relative">
+                            <div className="font-bold text-sm">{order + 1} / {vocabularies.length}</div>
+                            <button onClick={handleClickSpeaker}
+                                    className="ml-3 p-1 rounded-md hover:bg-gray-20 absolute right-0">
+                                {isPronounced ? (
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                        strokeWidth={1.5}
+                                        stroke="currentColor" className="w-6 h-6">
+                                        <path strokeLinecap="round" strokeLinejoin="round"
+                                            d="M19.114 5.636a9 9 0 0 1 0 12.728M16.463 8.288a5.25 5.25 0 0 1 0 7.424M6.75 8.25l4.72-4.72a.75.75 0 0 1 1.28.53v15.88a.75.75 0 0 1-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.009 9.009 0 0 1 2.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75Z"/>
+                                    </svg>
+                                ) : (
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                        stroke-width="1.5" stroke="currentColor" className="w-6 h-6">
+                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                            d="M17.25 9.75 19.5 12m0 0 2.25 2.25M19.5 12l2.25-2.25M19.5 12l-2.25 2.25m-10.5-6 4.72-4.72a.75.75 0 0 1 1.28.53v15.88a.75.75 0 0 1-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.009 9.009 0 0 1 2.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75Z"/>
+                                    </svg>
+                                )}
+                            </button>
+                        </div>
+                    </>
+                ): (
+                    <div className="h-[20px]"/>
+                )}
             </div>
             {vocabularies.length > 0 ? (
                 <>
-                    <div className="flex justify-center items-center mb-2 relative">
-                        <div className="font-bold text-sm">{order + 1} / {vocabularies.length}</div>
-                        <button onClick={handleClickSpeaker}
-                                className="ml-3 p-1 rounded-md hover:bg-gray-20 absolute right-0">
-                            {isPronounced ? (
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                                     strokeWidth={1.5}
-                                     stroke="currentColor" className="w-6 h-6">
-                                    <path strokeLinecap="round" strokeLinejoin="round"
-                                          d="M19.114 5.636a9 9 0 0 1 0 12.728M16.463 8.288a5.25 5.25 0 0 1 0 7.424M6.75 8.25l4.72-4.72a.75.75 0 0 1 1.28.53v15.88a.75.75 0 0 1-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.009 9.009 0 0 1 2.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75Z"/>
-                                </svg>
-                            ) : (
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                                     stroke-width="1.5" stroke="currentColor" className="w-6 h-6">
-                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                          d="M17.25 9.75 19.5 12m0 0 2.25 2.25M19.5 12l2.25-2.25M19.5 12l-2.25 2.25m-10.5-6 4.72-4.72a.75.75 0 0 1 1.28.53v15.88a.75.75 0 0 1-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.009 9.009 0 0 1 2.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75Z"/>
-                                </svg>
-                            )}
-                        </button>
-                    </div>
-                    <div className="rounded-2xl shadow-lg relative">
+
+                    <div className="rounded-2xl shadow-lg overflow-hidden mb-2">
                         <WordCard
                             word={currentWord}
                             showDefinition={showDefinition}
@@ -223,8 +247,8 @@ export default function MemorizePage() {
                 </>
             ) : (
                 <div
-                    className="flex flex-col items-center justify-center h-[300px] rounded-md shadow-lg border border-gray-10">
-                    <div className="text-center text-lg mb-2">단어장과 챕터를 선택하세요.</div>
+                    className="flex flex-col items-center justify-center h-72 rounded-2xl shadow-lg border border-gray-10 mb-2">
+                    <div className="text-center text-lg">단어장과 챕터를 선택하세요.</div>
                 </div>
             )}
         </div>
