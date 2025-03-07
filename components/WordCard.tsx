@@ -10,8 +10,8 @@ export default function WordCard({ word, showDefinition }: WordCardProps) {
         <div
             className={`flex flex-col items-center justify-center p-8 h-72 text-2xl transition-all duration-300 ${
                 showDefinition 
-                    ? "bg-gradient-to-br from-slate-800 to-slate-900 text-white" 
-                    : "bg-gradient-to-br from-slate-50 to-slate-100 dark:from-gray-900 dark:to-gray-800 text-gray-800 dark:text-gray-200"
+                    ? "bg-slate-900 text-white" 
+                    : "bg-slate-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200"
             }`}
             style={{ cursor: 'pointer' }}
         >
