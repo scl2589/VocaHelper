@@ -1,5 +1,4 @@
 import {Vocabulary} from "@/types/vocabulary";
-import Icon from "@/components/Icon";
 
 interface NavigationButtonsProps {
     word: Vocabulary;
