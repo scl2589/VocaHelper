@@ -105,9 +105,18 @@ export default function MemorizePage() {
     
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
-            if (e.key === 'ArrowRight') keyDownRef.current('next');
-            if (e.key === 'ArrowLeft') keyDownRef.current('prev');
-            if (e.key === ' ') setIsPronounced(prev => !prev);
+            if (e.key === 'ArrowRight') {
+                keyDownRef.current('next');
+                e.preventDefault();
+            }
+            if (e.key === 'ArrowLeft') {
+                keyDownRef.current('prev');
+                e.preventDefault();
+            }
+            if (e.key === ' ') {
+                setIsPronounced(prev => !prev);
+                e.preventDefault();
+            }
         };
         document.addEventListener('keydown', handleKeyDown);
         return () => document.removeEventListener('keydown', handleKeyDown);
@@ -161,96 +170,124 @@ export default function MemorizePage() {
     }, [selectedChapters]);
     
     return (
-        <div className="@container min-h-screen">
-            <div className="flex items-center justify-between w-full mb-2">
-                <Title title="단어 외우기"/>
-                <AddButton path="/vocabulary/add"/>
-            </div>
-            <div className="flex flex-col md:flex-row items-start justify-between w-full mb-2 min-h-[140px]">
-                <div className="flex flex-row mb-2 md:mb-0">
-                    <label htmlFor="book-select" className="mr-2 block w-20">단어장</label>
-                    <select id="book-select" className="bg-gray-10 p-2 border rounded-md w-64 md:w-80" name="book"
+        <div className="@container min-h-screen bg-gradient-to-b from-slate-50 to-slate-100 dark:from-gray-900 dark:to-gray-800 px-4 py-6 md:px-8 md:py-10">
+            <div className="max-w-4xl mx-auto">
+                <div className="flex items-center justify-between w-full mb-6">
+                    <Title title="단어 외우기"/>
+                    <AddButton path="/vocabulary/add"/>
+                </div>
+                <div className="flex flex-col md:flex-row items-start justify-between w-full mb-6 gap-4">
+                    <div className="flex flex-col w-full md:w-1/2 mb-4 md:mb-0">
+                        <label htmlFor="book-select" className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">단어장 선택</label>
+                        <select 
+                            id="book-select" 
+                            className="bg-white dark:bg-gray-700 p-3 border border-gray-300 dark:border-gray-600 rounded-lg w-full shadow-sm dark:shadow-gray-900/30 focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-indigo-500 dark:focus:border-indigo-400 dark:text-white" 
+                            name="book"
                             value={book || ''}
-                            onChange={handleBookSelect}>
-                        <option value="" disabled={books.length > 0}>
-                            {books.length === 0 ? "로드 중..." : "단어장을 선택하세요"}
-                        </option>
-                        {books?.map((book: Book) => <option key={book.name}
-                                                            value={book.name}>{book.name}</option>)}
-                    </select>
-                </div>
-                <div className="flex flex-row">
-                    <label className="mr-2 block w-20">챕터</label>
-                    <div className="bg-gray-10 p-2 border rounded-md overflow-y-auto w-64 md:w-80 h-[120px] md:h-[150px] flex flex-col">
-                        {chapters.length === 0 ? (
-                            <div className="text-sm text-gray-500 flex items-center justify-center h-full w-full flex-grow">
-                                {book ? "로드 중..." : "단어장을 먼저 선택하세요"}
-                            </div>
-                        ) : (
-                            <div className="h-full overflow-y-auto">
-                                {chapters.map((chapter) => (
-                                    <ChapterCheckbox 
-                                        key={chapter.id} 
-                                        chapter={chapter} 
-                                        isSelected={selectedChapters.includes(chapter.id)} 
-                                        onToggle={handleChapterToggle}
-                                    />
-                                ))}
-                            </div>
-                        )}
+                            onChange={handleBookSelect}
+                        >
+                            <option value="" disabled={books.length > 0} className="dark:bg-gray-700">
+                                {books.length === 0 ? "로드 중..." : "단어장을 선택하세요"}
+                            </option>
+                            {books?.map((book: Book) => <option key={book.name} value={book.name} className="dark:bg-gray-700">{book.name}</option>)}
+                        </select>
                     </div>
-                </div>
-            </div>
-            <div>
-                {vocabularies.length > 0 ? (
-                    <>
-                        <div className="flex justify-center items-center mb-2 relative">
-                            <div className="font-bold text-sm">{order + 1} / {vocabularies.length}</div>
-                            <button onClick={handleClickSpeaker}
-                                    className="ml-3 p-1 rounded-md hover:bg-gray-20 absolute right-0">
-                                {isPronounced ? (
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                                        strokeWidth={1.5}
-                                        stroke="currentColor" className="w-6 h-6">
-                                        <path strokeLinecap="round" strokeLinejoin="round"
-                                            d="M19.114 5.636a9 9 0 0 1 0 12.728M16.463 8.288a5.25 5.25 0 0 1 0 7.424M6.75 8.25l4.72-4.72a.75.75 0 0 1 1.28.53v15.88a.75.75 0 0 1-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.009 9.009 0 0 1 2.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75Z"/>
-                                    </svg>
-                                ) : (
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                                        stroke-width="1.5" stroke="currentColor" className="w-6 h-6">
-                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                            d="M17.25 9.75 19.5 12m0 0 2.25 2.25M19.5 12l2.25-2.25M19.5 12l-2.25 2.25m-10.5-6 4.72-4.72a.75.75 0 0 1 1.28.53v15.88a.75.75 0 0 1-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.009 9.009 0 0 1 2.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75Z"/>
-                                    </svg>
-                                )}
-                            </button>
+                    <div className="flex flex-col w-full md:w-1/2">
+                        <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">챕터 선택</label>
+                        <div className="bg-white dark:bg-gray-700 p-3 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm dark:shadow-gray-900/30 h-[150px] md:h-[180px] flex flex-col overflow-hidden">
+                            {chapters.length === 0 ? (
+                                <div className="text-sm text-gray-500 dark:text-gray-400 flex items-center justify-center h-full w-full flex-grow">
+                                    {book ? 
+                                        <div className="flex items-center">
+                                            <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-indigo-500 dark:text-indigo-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                            </svg>
+                                            로드 중...
+                                        </div> 
+                                        : "단어장을 먼저 선택하세요"
+                                    }
+                                </div>
+                            ) : (
+                                <div className="h-full overflow-y-auto pr-2 space-y-1">
+                                    {chapters.map((chapter) => (
+                                        <ChapterCheckbox 
+                                            key={chapter.id} 
+                                            chapter={chapter} 
+                                            isSelected={selectedChapters.includes(chapter.id)} 
+                                            onToggle={handleChapterToggle}
+                                        />
+                                    ))}
+                                </div>
+                            )}
                         </div>
-                    </>
-                ): (
-                    <div className="h-[20px]"/>
-                )}
-            </div>
-            {vocabularies.length > 0 ? (
-                <>
-
-                    <div className="rounded-2xl shadow-lg overflow-hidden mb-2">
-                        <WordCard
-                            word={currentWord}
-                            showDefinition={showDefinition}
-                        />
                     </div>
-                    <NavigationButtons 
-                        word={currentWord}
-                        handleNavigation={handleNavigation}
-                        onUpdateVocabulary={handleUpdateVocabulary}
-                        shuffleVocabularies={shuffleVocabularies}
-                    />
-                </>
-            ) : (
-                <div
-                    className="flex flex-col items-center justify-center h-72 rounded-2xl shadow-lg border border-gray-10 mb-2">
-                    <div className="text-center text-lg">단어장과 챕터를 선택하세요.</div>
                 </div>
-            )}
+                <div className="mt-8">
+                    {vocabularies.length > 0 ? (
+                        <>
+                            <div className="flex justify-between items-center mb-4">
+                                <div className="flex items-center">
+                                    <div className="bg-indigo-100 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-200 py-1 px-3 rounded-full font-medium text-sm">
+                                        {order + 1} / {vocabularies.length}
+                                    </div>
+                                    <button 
+                                        onClick={shuffleVocabularies}
+                                        className="ml-4 bg-white dark:bg-gray-700 p-2 rounded-full shadow-sm dark:shadow-gray-900/30 hover:shadow-md transition-shadow border border-gray-200 dark:border-gray-600 flex items-center text-sm dark:text-gray-300"
+                                    >
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5}
+                                            stroke="currentColor" className="w-4 h-4 mr-1 text-indigo-600 dark:text-indigo-400">
+                                            <path strokeLinecap="round" strokeLinejoin="round"
+                                                  d="M19.5 12c0-1.232-.046-2.453-.138-3.662a4.006 4.006 0 0 0-3.7-3.7 48.678 48.678 0 0 0-7.324 0 4.006 4.006 0 0 0-3.7 3.7c-.017.22-.032.441-.046.662M19.5 12l3-3m-3 3-3-3m-12 3c0 1.232.046 2.453.138 3.662a4.006 4.006 0 0 0 3.7 3.7 48.656 48.656 0 0 0 7.324 0 4.006 4.006 0 0 0 3.7-3.7c.017-.22.032-.441.046-.662M4.5 12l3 3m-3-3-3 3"/>
+                                        </svg>
+                                        섞기
+                                    </button>
+                                </div>
+                                <button 
+                                    onClick={handleClickSpeaker}
+                                    className="bg-white dark:bg-gray-700 p-2 rounded-full shadow-sm dark:shadow-gray-900/30 hover:shadow-md transition-shadow border border-gray-200 dark:border-gray-600"
+                                >
+                                    {isPronounced ? (
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                            strokeWidth={1.5}
+                                            stroke="currentColor" className="w-5 h-5 text-indigo-600 dark:text-indigo-400">
+                                            <path strokeLinecap="round" strokeLinejoin="round"
+                                                  d="M19.114 5.636a9 9 0 0 1 0 12.728M16.463 8.288a5.25 5.25 0 0 1 0 7.424M6.75 8.25l4.72-4.72a.75.75 0 0 1 1.28.53v15.88a.75.75 0 0 1-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.009 9.009 0 0 1 2.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75Z"/>
+                                        </svg>
+                                    ) : (
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                            strokeWidth={1.5} stroke="currentColor" className="w-5 h-5 text-gray-500 dark:text-gray-400">
+                                            <path strokeLinecap="round" strokeLinejoin="round"
+                                                  d="M17.25 9.75 19.5 12m0 0 2.25 2.25M19.5 12l2.25-2.25M19.5 12l-2.25 2.25m-10.5-6 4.72-4.72a.75.75 0 0 1 1.28.53v15.88a.75.75 0 0 1-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.009 9.009 0 0 1 2.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75Z"/>
+                                        </svg>
+                                    )}
+                                </button>
+                            </div>
+                            <div className="rounded-2xl shadow-lg dark:shadow-gray-900/30 overflow-hidden mb-6 transition-all duration-300 hover:shadow-xl bg-white dark:bg-gray-700">
+                                <div onClick={() => setShowDefinition(!showDefinition)}>
+                                    <WordCard
+                                        word={currentWord}
+                                        showDefinition={showDefinition}
+                                    />
+                                </div>
+                            </div>
+                            <NavigationButtons 
+                                word={currentWord}
+                                handleNavigation={handleNavigation}
+                                onUpdateVocabulary={handleUpdateVocabulary}
+                            />
+                        </>
+                    ) : (
+                        <div className="flex flex-col items-center justify-center h-72 rounded-2xl shadow-md dark:shadow-gray-900/30 border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 mb-2 p-6">
+                            <svg className="w-16 h-16 text-gray-300 dark:text-gray-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+                            </svg>
+                            <div className="text-center text-lg font-medium text-gray-600 dark:text-gray-300">단어장과 챕터를 선택하세요</div>
+                            <p className="text-center text-gray-500 dark:text-gray-400 text-sm mt-2">학습할 단어를 불러오기 위해<br/>위쪽에서 단어장과 챕터를 선택해주세요.</p>
+                        </div>
+                    )}
+                </div>
+            </div>
         </div>
     );
 }
