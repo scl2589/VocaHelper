@@ -89,12 +89,39 @@ export default function MemorizePage() {
 
   const handleUpdateVocabulary = useCallback(async (word: Vocabulary) => {
     try {
-      await updateVocabulary(word);
+      // 로컬 상태 먼저 업데이트
       setVocabularies((prev) =>
-        prev.map((vocab) => (vocab.word === word.word ? { ...vocab, count: vocab.count + 1 } : vocab))
+        prev.map((vocab) => (vocab.id === word.id ? { ...vocab, count: vocab.count + 1 } : vocab))
       );
+
+      // DB에 업데이트 요청
+      await updateVocabulary({
+        ...word,
+        count: word.count + 1,
+      });
     } catch (error) {
       console.error('Failed to update vocabulary:', error);
+    }
+  }, []);
+
+  const handleToggleMemorized = useCallback(async (word: Vocabulary) => {
+    try {
+      // 로컬 상태 먼저 업데이트 (빠른 UI 반응을 위해)
+      setVocabularies((prev) =>
+        prev.map((vocab) => (vocab.id === word.id ? { ...vocab, memorized: !vocab.memorized } : vocab))
+      );
+
+      // DB에 업데이트 요청
+      await updateVocabulary({
+        ...word,
+        memorized: !word.memorized,
+      });
+    } catch (error) {
+      console.error('Failed to update memorized status:', error);
+      // 에러 발생 시 상태 롤백
+      setVocabularies((prev) =>
+        prev.map((vocab) => (vocab.id === word.id ? { ...vocab, memorized: word.memorized } : vocab))
+      );
     }
   }, []);
 
@@ -286,16 +313,16 @@ export default function MemorizePage() {
                   </button>
                   <button
                     onClick={handleClickPlay}
-                    className="ml-4 bg-white dark:bg-gray-700 p-2 rounded-full shadow-sm dark:shadow-gray-900/30 hover:shadow-md transition-shadow border border-gray-200 dark:border-gray-600 flex items-center text-sm dark:text-gray-300">
+                    className="ml-3 bg-white dark:bg-gray-700 py-2 px-3 rounded-lg shadow-sm dark:shadow-gray-900/30 hover:shadow-md transition-shadow border border-gray-200 dark:border-gray-600 flex items-center text-sm dark:text-gray-300">
                     {isPlaying ? (
                       <>
                         <Icon type="pause" customClassName="w-4 h-4 mr-1 text-indigo-600 dark:text-indigo-400" />
-                        일시정지
+                        <span className="text-gray-700 dark:text-gray-300">일시정지</span>
                       </>
                     ) : (
                       <>
                         <Icon type="play" customClassName="w-4 h-4 mr-1 text-indigo-600 dark:text-indigo-400" />
-                        재생하기
+                        <span className="text-gray-700 dark:text-gray-300">재생하기</span>
                       </>
                     )}
                   </button>
@@ -312,7 +339,11 @@ export default function MemorizePage() {
               </div>
               <div className="rounded-2xl shadow-lg dark:shadow-gray-900/30 overflow-hidden mb-6 transition-all duration-300 hover:shadow-xl bg-white dark:bg-gray-700">
                 <div onClick={() => setShowDefinition(!showDefinition)}>
-                  <WordCard word={currentWord} showDefinition={showDefinition} />
+                  <WordCard
+                    word={currentWord}
+                    showDefinition={showDefinition}
+                    onToggleMemorized={handleToggleMemorized}
+                  />
                 </div>
               </div>
               <NavigationButtons

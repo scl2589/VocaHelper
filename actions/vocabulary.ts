@@ -1,9 +1,9 @@
 "use server";
 
 import { supabase } from "@/lib/supabase";
-import {revalidatePath} from "next/cache";
+import { revalidatePath } from "next/cache";
 import * as XLSX from 'xlsx';
-import {Vocabulary, CreateVocabulary} from "@/types/vocabulary";
+import { Vocabulary, CreateVocabulary } from "@/types/vocabulary";
 
 
 export async function createVocabulary(formData: FormData) {
@@ -75,12 +75,24 @@ export async function getVocabulariesByChapters(selectedChapters: string[]): Pro
 }
 
 export const updateVocabulary = async (data: Vocabulary): Promise<void> => {
+    // 업데이트할 필드 정의
+    const updateData: Partial<Vocabulary> = {};
+
+    // count가 변경된 경우
+    if (data.count !== undefined) {
+        updateData.count = data.count;
+    }
+
+    // memorized가 정의된 경우
+    if (data.memorized !== undefined) {
+        updateData.memorized = data.memorized;
+    }
+
     const { error } = await supabase
         .from('vocabularies')
-        .update({ count: data.count + 1 })
-        .eq('word', data.word)
-        .eq('book', data.book)
-        .select()
+        .update(updateData)
+        .eq('id', data.id)
+        .select();
 
     if (error) throw new Error(error.message);
 }
