@@ -347,14 +347,14 @@ export default function MemorizePage() {
             <>
               <div className="flex justify-between items-center mb-4">
                 <div className="flex items-center">
-                  <div className="min-w-[80px] text-center bg-indigo-100 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-200 py-1 px-3 rounded-full font-medium text-sm">
+                  <div className="min-w-[40px] md-min-w-[80px] text-center bg-indigo-100 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-200 py-1 px-3 rounded-full font-medium text-sm">
                     {order + 1} / {currentVocabularies.length}
                   </div>
                   <button
                     onClick={shuffleVocabularies}
                     className="ml-4 bg-white dark:bg-gray-700 p-2 rounded-full shadow-sm dark:shadow-gray-900/30 hover:shadow-md transition-shadow border border-gray-200 dark:border-gray-600 flex items-center text-sm dark:text-gray-300">
                     <Icon type="shuffle" customClassName="w-4 h-4 mr-1 text-indigo-600 dark:text-indigo-400" />
-                    섞기
+                    <span className="hidden sm:inline">섞기</span>
                   </button>
                   <button
                     onClick={handleClickPlay}
@@ -362,12 +362,12 @@ export default function MemorizePage() {
                     {isPlaying ? (
                       <>
                         <Icon type="pause" customClassName="w-4 h-4 mr-1 text-indigo-600 dark:text-indigo-400" />
-                        <span className="text-gray-700 dark:text-gray-300">일시정지</span>
+                        <span className="text-gray-700 dark:text-gray-300">정지</span>
                       </>
                     ) : (
                       <>
                         <Icon type="play" customClassName="w-4 h-4 mr-1 text-indigo-600 dark:text-indigo-400" />
-                        <span className="text-gray-700 dark:text-gray-300">재생하기</span>
+                        <span className="text-gray-700 dark:text-gray-300">재생</span>
                       </>
                     )}
                   </button>
@@ -391,7 +391,7 @@ export default function MemorizePage() {
                         d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"
                       />
                     </svg>
-                    {showOnlyUnmemorized ? '전체 보기' : '복습하기'}
+                    {showOnlyUnmemorized ? '전체' : '복습'}
                   </button>
                 </div>
                 <button
