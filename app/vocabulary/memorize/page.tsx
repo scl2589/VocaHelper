@@ -27,6 +27,7 @@ const shuffleArray = <T,>(array: T[]): T[] => {
 
 export default function MemorizePage() {
   const [vocabularies, setVocabularies] = useState<Vocabulary[]>([]);
+  const [filteredVocabularies, setFilteredVocabularies] = useState<Vocabulary[]>([]);
   const [books, setBooks] = useState<Book[]>([]);
   const [book, setBook] = useState('');
   const [order, setOrder] = useState(0);
@@ -35,17 +36,20 @@ export default function MemorizePage() {
   const [selectedChapters, setSelectedChapters] = useState<string[]>([]);
   const [isPronounced, setIsPronounced] = useState(true);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [showOnlyUnmemorized, setShowOnlyUnmemorized] = useState(false);
 
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  const currentWord = vocabularies[order];
+  // 필터링된 단어 목록 또는 전체 단어 목록 사용
+  const currentVocabularies = showOnlyUnmemorized ? filteredVocabularies : vocabularies;
+  const currentWord = currentVocabularies[order];
 
   const handleNavigation = useCallback(
     (direction: 'next' | 'prev') => {
       if (direction === 'next') {
         if (showDefinition) {
           setShowDefinition(false);
-          setOrder((prevOrder) => (prevOrder + 1) % vocabularies.length);
+          setOrder((prevOrder) => (prevOrder + 1) % currentVocabularies.length);
         } else {
           setShowDefinition(true);
         }
@@ -55,11 +59,11 @@ export default function MemorizePage() {
           setShowDefinition(false);
         } else {
           setShowDefinition(true);
-          setOrder((prevOrder) => (prevOrder - 1 + vocabularies.length) % vocabularies.length);
+          setOrder((prevOrder) => (prevOrder - 1 + currentVocabularies.length) % currentVocabularies.length);
         }
       }
     },
-    [showDefinition, vocabularies.length]
+    [showDefinition, currentVocabularies.length]
   );
 
   const speakWord = useCallback(
@@ -104,26 +108,38 @@ export default function MemorizePage() {
     }
   }, []);
 
-  const handleToggleMemorized = useCallback(async (word: Vocabulary) => {
-    try {
-      // 로컬 상태 먼저 업데이트 (빠른 UI 반응을 위해)
-      setVocabularies((prev) =>
-        prev.map((vocab) => (vocab.id === word.id ? { ...vocab, memorized: !vocab.memorized } : vocab))
-      );
+  const handleToggleMemorized = useCallback(
+    async (word: Vocabulary) => {
+      try {
+        // 로컬 상태 먼저 업데이트 (빠른 UI 반응을 위해)
+        setVocabularies((prev) =>
+          prev.map((vocab) => (vocab.id === word.id ? { ...vocab, memorized: !vocab.memorized } : vocab))
+        );
 
-      // DB에 업데이트 요청
-      await updateVocabulary({
-        ...word,
-        memorized: !word.memorized,
-      });
-    } catch (error) {
-      console.error('Failed to update memorized status:', error);
-      // 에러 발생 시 상태 롤백
-      setVocabularies((prev) =>
-        prev.map((vocab) => (vocab.id === word.id ? { ...vocab, memorized: word.memorized } : vocab))
-      );
-    }
-  }, []);
+        // DB에 업데이트 요청
+        await updateVocabulary({
+          ...word,
+          memorized: !word.memorized,
+        });
+
+        // 필터링된 단어 목록에서 order 조정
+        if (showOnlyUnmemorized && !word.memorized) {
+          // 현재 단어가 '외웠어요'로 표시되면 필터링된 목록에서 제거됨
+          // order가 마지막 단어였으면 첫 단어로 이동, 아니면 현재 위치 유지
+          if (order >= filteredVocabularies.length - 1) {
+            setOrder(0);
+          }
+        }
+      } catch (error) {
+        console.error('Failed to update memorized status:', error);
+        // 에러 발생 시 상태 롤백
+        setVocabularies((prev) =>
+          prev.map((vocab) => (vocab.id === word.id ? { ...vocab, memorized: word.memorized } : vocab))
+        );
+      }
+    },
+    [showOnlyUnmemorized, order, filteredVocabularies.length]
+  );
 
   const handleChapterToggle = useCallback((chapterId: string, isChecked: boolean) => {
     setSelectedChapters((prev) => (isChecked ? [...prev, chapterId] : prev.filter((id) => id !== chapterId)));
@@ -201,6 +217,35 @@ export default function MemorizePage() {
     })();
   }, [selectedChapters]);
 
+  // 필터링된 단어 목록 업데이트
+  useEffect(() => {
+    if (vocabularies.length > 0) {
+      const filtered = vocabularies.filter((word) => !word.memorized);
+      setFilteredVocabularies(filtered);
+    }
+  }, [vocabularies]);
+
+  // 필터링 상태가 변경될 때마다 order가 범위를 벗어나지 않도록 조정
+  useEffect(() => {
+    if (currentVocabularies.length > 0 && order >= currentVocabularies.length) {
+      setOrder(0);
+    }
+  }, [showOnlyUnmemorized, currentVocabularies.length, order]);
+
+  // 필터 토글 함수
+  const toggleFilter = useCallback(() => {
+    // 토글 전에 재생 중이면 중지
+    if (isPlaying && intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+      setIsPlaying(false);
+    }
+
+    setShowOnlyUnmemorized((prev) => !prev);
+    setOrder(0); // 필터 변경 시 첫 단어부터 시작
+    setShowDefinition(false);
+  }, [isPlaying]);
+
   const handleClickPlay = useCallback(() => {
     if (isPlaying && intervalRef.current) {
       clearInterval(intervalRef.current);
@@ -226,10 +271,10 @@ export default function MemorizePage() {
       if (count >= 20) {
         count = 0;
         setShowDefinition(false);
-        setOrder((current) => (current + 1) % vocabularies.length);
+        setOrder((current) => (current + 1) % currentVocabularies.length);
       }
     }, 500);
-  }, [isPlaying, vocabularies.length]);
+  }, [isPlaying, currentVocabularies.length]);
 
   useEffect(() => {
     return () => {
@@ -298,12 +343,12 @@ export default function MemorizePage() {
           </div>
         </div>
         <div className="mt-8">
-          {vocabularies.length > 0 ? (
+          {currentVocabularies.length > 0 ? (
             <>
               <div className="flex justify-between items-center mb-4">
                 <div className="flex items-center">
                   <div className="bg-indigo-100 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-200 py-1 px-3 rounded-full font-medium text-sm">
-                    {order + 1} / {vocabularies.length}
+                    {order + 1} / {currentVocabularies.length}
                   </div>
                   <button
                     onClick={shuffleVocabularies}
@@ -326,6 +371,28 @@ export default function MemorizePage() {
                       </>
                     )}
                   </button>
+                  <button
+                    onClick={toggleFilter}
+                    className={`ml-3 py-2 px-3 rounded-lg shadow-sm flex items-center text-sm transition-colors duration-200 ${
+                      showOnlyUnmemorized
+                        ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300 border border-yellow-200 dark:border-yellow-800'
+                        : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-600'
+                    }`}>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="w-4 h-4 mr-1 text-current"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor">
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"
+                      />
+                    </svg>
+                    {showOnlyUnmemorized ? '전체 보기' : '복습하기'}
+                  </button>
                 </div>
                 <button
                   onClick={handleClickSpeaker}
@@ -337,20 +404,59 @@ export default function MemorizePage() {
                   )}
                 </button>
               </div>
-              <div className="rounded-2xl shadow-lg dark:shadow-gray-900/30 overflow-hidden mb-6 transition-all duration-300 hover:shadow-xl bg-white dark:bg-gray-700">
-                <div onClick={() => setShowDefinition(!showDefinition)}>
-                  <WordCard
-                    word={currentWord}
-                    showDefinition={showDefinition}
-                    onToggleMemorized={handleToggleMemorized}
-                  />
+              {filteredVocabularies.length === 0 && showOnlyUnmemorized ? (
+                <div className="flex flex-col items-center justify-center h-72 rounded-2xl shadow-md dark:shadow-gray-900/30 border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 mb-6 p-6">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="w-16 h-16 text-green-300 dark:text-green-600 mb-4"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                  <div className="text-center text-lg font-medium text-gray-600 dark:text-gray-300">
+                    모든 단어를 외웠어요!
+                  </div>
+                  <p className="text-center text-gray-500 dark:text-gray-400 text-sm mt-2">
+                    축하합니다! 모든 단어를 외우셨습니다.
+                    <br />
+                    다른 챕터를 선택하거나 '전체 보기'를 눌러보세요.
+                  </p>
+                  <button
+                    onClick={toggleFilter}
+                    className="mt-4 bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded-lg shadow transition-colors duration-200">
+                    전체 단어 보기
+                  </button>
                 </div>
-              </div>
-              <NavigationButtons
-                word={currentWord}
-                handleNavigation={handleNavigation}
-                onUpdateVocabulary={handleUpdateVocabulary}
-              />
+              ) : (
+                <>
+                  <div className="rounded-2xl shadow-lg dark:shadow-gray-900/30 overflow-hidden mb-6 transition-all duration-300 hover:shadow-xl bg-white dark:bg-gray-700">
+                    <div onClick={() => setShowDefinition(!showDefinition)}>
+                      <WordCard
+                        word={currentWord}
+                        showDefinition={showDefinition}
+                        onToggleMemorized={handleToggleMemorized}
+                      />
+                    </div>
+                  </div>
+                  <NavigationButtons
+                    word={currentWord}
+                    handleNavigation={handleNavigation}
+                    onUpdateVocabulary={handleUpdateVocabulary}
+                  />
+                </>
+              )}
+              {showOnlyUnmemorized && (
+                <div className="mt-4 mb-2 text-sm text-center text-gray-500 dark:text-gray-400">
+                  <span className="font-medium">{filteredVocabularies.length}</span>개의 단어가 복습이 필요합니다 (전체{' '}
+                  <span className="font-medium">{vocabularies.length}</span>개 중)
+                </div>
+              )}
             </>
           ) : (
             <div className="flex flex-col items-center justify-center h-72 rounded-2xl shadow-md dark:shadow-gray-900/30 border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 mb-2 p-6">
