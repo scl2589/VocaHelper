@@ -284,6 +284,21 @@ export default function MemorizePage() {
                     <Icon type="shuffle" customClassName="w-4 h-4 mr-1 text-indigo-600 dark:text-indigo-400" />
                     섞기
                   </button>
+                  <button
+                    onClick={handleClickPlay}
+                    className="ml-4 bg-white dark:bg-gray-700 p-2 rounded-full shadow-sm dark:shadow-gray-900/30 hover:shadow-md transition-shadow border border-gray-200 dark:border-gray-600 flex items-center text-sm dark:text-gray-300">
+                    {isPlaying ? (
+                      <>
+                        <Icon type="pause" customClassName="w-4 h-4 mr-1 text-indigo-600 dark:text-indigo-400" />
+                        일시정지
+                      </>
+                    ) : (
+                      <>
+                        <Icon type="play" customClassName="w-4 h-4 mr-1 text-indigo-600 dark:text-indigo-400" />
+                        재생하기
+                      </>
+                    )}
+                  </button>
                 </div>
                 <button
                   onClick={handleClickSpeaker}
@@ -300,21 +315,6 @@ export default function MemorizePage() {
                   <WordCard word={currentWord} showDefinition={showDefinition} />
                 </div>
               </div>
-              <button
-                onClick={handleClickPlay}
-                className="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded-lg shadow transition-colors duration-200 flex items-center justify-center mb-4">
-                {isPlaying ? (
-                  <>
-                    <Icon type="pause" customClassName="w-5 h-5 mr-2" />
-                    일시정지
-                  </>
-                ) : (
-                  <>
-                    <Icon type="play" customClassName="w-5 h-5 mr-2" />
-                    재생하기
-                  </>
-                )}
-              </button>
               <NavigationButtons
                 word={currentWord}
                 handleNavigation={handleNavigation}
