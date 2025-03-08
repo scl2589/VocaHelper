@@ -425,7 +425,7 @@ export default function MemorizePage() {
                   <p className="text-center text-gray-500 dark:text-gray-400 text-sm mt-2">
                     축하합니다! 모든 단어를 외우셨습니다.
                     <br />
-                    다른 챕터를 선택하거나 '전체 보기'를 눌러보세요.
+                    다른 챕터를 선택하거나 &apos;전체 보기&apos;를 눌러보세요.
                   </p>
                   <button
                     onClick={toggleFilter}
