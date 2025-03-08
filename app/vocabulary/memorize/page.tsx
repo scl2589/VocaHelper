@@ -347,7 +347,7 @@ export default function MemorizePage() {
             <>
               <div className="flex justify-between items-center mb-4">
                 <div className="flex items-center">
-                  <div className="bg-indigo-100 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-200 py-1 px-3 rounded-full font-medium text-sm">
+                  <div className="min-w-[80px] text-center bg-indigo-100 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-200 py-1 px-3 rounded-full font-medium text-sm">
                     {order + 1} / {currentVocabularies.length}
                   </div>
                   <button
