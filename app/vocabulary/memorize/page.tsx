@@ -39,6 +39,10 @@ export default function MemorizePage() {
   const [showOnlyUnmemorized, setShowOnlyUnmemorized] = useState(false);
 
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const orderRef = useRef(order);
+  const vocabulariesRef = useRef(vocabularies);
+  const filteredVocabulariesRef = useRef(filteredVocabularies);
+  const showOnlyUnmemorizedRef = useRef(showOnlyUnmemorized);
 
   // 필터링된 단어 목록 또는 전체 단어 목록 사용
   const currentVocabularies = showOnlyUnmemorized ? filteredVocabularies : vocabularies;
@@ -67,12 +71,12 @@ export default function MemorizePage() {
   );
 
   const speakWord = useCallback(
-    (text: string) => {
+    (text: string, language = 'en-US') => {
       if (!isPronounced) return;
 
       const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = 'en-US';
-      utterance.rate = 0.8;
+      utterance.lang = language;
+      utterance.rate = language === 'en-US' ? 0.8 : 1.2;
       window.speechSynthesis.speak(utterance);
     },
     [isPronounced]
@@ -151,6 +155,7 @@ export default function MemorizePage() {
     keyDownRef.current = handleNavigation;
   }, [handleNavigation]);
 
+  // 키보드 이벤트 처리
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'ArrowRight') {
@@ -172,10 +177,10 @@ export default function MemorizePage() {
 
   // 새로운 단어로 이동하거나 앱이 처음 로드될 때 자동 발음
   useEffect(() => {
-    if (currentWord && isPronounced && !showDefinition) {
+    if (currentWord && isPronounced && !showDefinition && !isPlaying) {
       speakWord(currentWord.word);
     }
-  }, [currentWord, isPronounced, showDefinition, speakWord]);
+  }, [currentWord, isPronounced, showDefinition, speakWord, isPlaying]);
 
   const handleBookSelect = useCallback((event: ChangeEvent<HTMLSelectElement>) => {
     const selectedBook = event.target.value;
@@ -268,13 +273,26 @@ export default function MemorizePage() {
       setShowDefinition((prev) => !prev);
       count++;
 
+      if ([1, 7, 14].includes(count)) {
+        const currentVocab = showOnlyUnmemorizedRef.current
+          ? filteredVocabulariesRef.current[orderRef.current]
+          : vocabulariesRef.current[orderRef.current];
+
+        if (currentVocab) {
+          speakWord(currentVocab.word);
+          currentVocab.definitions.forEach((def) => {
+            speakWord(def.definition, 'ko-KR');
+          });
+        }
+      }
+
       if (count >= 20) {
         count = 0;
         setShowDefinition(false);
         setOrder((current) => (current + 1) % currentVocabularies.length);
       }
     }, 500);
-  }, [isPlaying, currentVocabularies.length]);
+  }, [isPlaying, currentVocabularies.length, speakWord]);
 
   useEffect(() => {
     return () => {
@@ -284,6 +302,22 @@ export default function MemorizePage() {
       }
     };
   }, []);
+
+  useEffect(() => {
+    orderRef.current = order;
+  }, [order]);
+
+  useEffect(() => {
+    vocabulariesRef.current = vocabularies;
+  }, [vocabularies]);
+
+  useEffect(() => {
+    filteredVocabulariesRef.current = filteredVocabularies;
+  }, [filteredVocabularies]);
+
+  useEffect(() => {
+    showOnlyUnmemorizedRef.current = showOnlyUnmemorized;
+  }, [showOnlyUnmemorized]);
 
   return (
     <div className="@container min-h-screen bg-gradient-to-b from-slate-50 to-slate-100 dark:from-gray-900 dark:to-gray-800 px-4 py-6 md:px-8 md:py-10">
