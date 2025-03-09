@@ -231,6 +231,16 @@ export async function createVocabularyFromMultipleFileSheets(formData: FormData)
 
     for (const sheetName of workbook.SheetNames) {
         const sheet = workbook.Sheets[sheetName];
+        const firstRowData = XLSX.utils.sheet_to_json<string[]>(sheet, { header: 1 })[0];
+
+        if (!firstRowData || !firstRowData.includes("단어")) {
+            throw new Error(`'단어' 열이 없는 시트(${sheetName})입니다.`);
+        }
+
+        // "의미N", "품사N" 컬럼 동적 감지
+        const meaningKeys = firstRowData.filter((key) => key.startsWith("의미"));
+        const partOfSpeechKeys = firstRowData.filter((key) => key.startsWith("품사"));
+
         const json: VocabularyRow[] = XLSX.utils.sheet_to_json(sheet);
 
         // ✅ 해당 챕터가 존재하는지 확인
@@ -261,13 +271,29 @@ export async function createVocabularyFromMultipleFileSheets(formData: FormData)
             chapter = existingChapter;
         }
 
-        const words = json.map((item: VocabularyRow) => ({
-            word: item["단어"],
-            definitions: [{ definition: item["의미"] }],
-            book,
-            chapter_id: chapter?.id,
-            count: 0,
-        }));
+        const words = json.map((item: VocabularyRow) => {
+            const definitions: Definition[] = [];
+
+            for (let i = 0; i < meaningKeys.length; i++) {
+                const meaningKey = meaningKeys[i];
+                const partOfSpeechKey = partOfSpeechKeys[i];
+
+                if (item[meaningKey] && item[partOfSpeechKey]) {
+                    definitions.push({
+                        partOfSpeech: item[partOfSpeechKey],
+                        definition: item[meaningKey],
+                    });
+                }
+            }
+
+            return {
+                word: item["단어"],
+                definitions,
+                book,
+                chapter_id: chapter?.id,
+                count: 0,
+            };
+        });
 
         allWords.push(...words);
     }
