@@ -120,7 +120,7 @@ export function useWordPlayback(vocabularies: Vocabulary[], filteredVocabularies
       setShowDefinition((prev) => !prev);
       count++;
 
-      if ([1, 7, 14].includes(count)) {
+      if ([1, 5].includes(count)) {
         const currentVocab = showOnlyUnmemorizedRef.current
           ? filteredVocabulariesRef.current[orderRef.current]
           : vocabulariesRef.current[orderRef.current];
