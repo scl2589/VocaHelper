@@ -26,6 +26,7 @@ export default function MemorizePage() {
     chapters,
     selectedChapters,
     showOnlyUnmemorized,
+    isShuffled,
     currentVocabularies,
     handleBookSelect,
     handleChapterToggle,
@@ -100,6 +101,7 @@ export default function MemorizePage() {
                 isPlaying={isPlaying}
                 isPronounced={isPronounced}
                 showOnlyUnmemorized={showOnlyUnmemorized}
+                isShuffled={isShuffled}
                 onShuffle={shuffleVocabularies}
                 onPlay={handleClickPlay}
                 onPronounce={handleClickSpeaker}

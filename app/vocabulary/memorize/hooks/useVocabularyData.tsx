@@ -6,7 +6,6 @@ import { Vocabulary } from '@/types/vocabulary';
 import { Book } from '@/types/book';
 import { Chapter } from '@/types/chapter';
 
-// Helper function for shuffling arrays
 const shuffleArray = <T,>(array: T[]): T[] => {
   const shuffled = [...array];
   for (let i = shuffled.length - 1; i > 0; i--) {
@@ -18,6 +17,8 @@ const shuffleArray = <T,>(array: T[]): T[] => {
 
 export function useVocabularyData() {
   const [vocabularies, setVocabularies] = useState<Vocabulary[]>([]);
+  const [originalVocabularies, setOriginalVocabularies] = useState<Vocabulary[]>([]);
+  const [isShuffled, setIsShuffled] = useState(false);
   const [filteredVocabularies, setFilteredVocabularies] = useState<Vocabulary[]>([]);
   const [books, setBooks] = useState<Book[]>([]);
   const [book, setBook] = useState('');
@@ -53,7 +54,9 @@ export function useVocabularyData() {
 
     (async () => {
       const data = await getVocabulariesByChapters(selectedChapters);
-      setVocabularies(shuffleArray(data));
+      setVocabularies(data);
+      setOriginalVocabularies(data); // 원본 순서 저장
+      setIsShuffled(false); // 새 데이터 로드시 섞인 상태 초기화
     })();
   }, [selectedChapters]);
 
@@ -78,10 +81,18 @@ export function useVocabularyData() {
     setSelectedChapters((prev) => (isChecked ? [...prev, chapterId] : prev.filter((id) => id !== chapterId)));
   }, []);
 
-  // 단어 셔플
+  // 단어 셔플/원래 순서 토글
   const shuffleVocabularies = useCallback(() => {
-    setVocabularies((prev) => shuffleArray(prev));
-  }, []);
+    if (isShuffled) {
+      // 현재 섞인 상태라면 원래 순서로 복원
+      setVocabularies(originalVocabularies);
+      setIsShuffled(false);
+    } else {
+      // 현재 원래 순서라면 섞기
+      setVocabularies((prev) => shuffleArray(prev));
+      setIsShuffled(true);
+    }
+  }, [isShuffled, originalVocabularies]);
 
   // 외운/외우지 못한 단어 필터
   const toggleFilter = useCallback(() => {
@@ -97,6 +108,7 @@ export function useVocabularyData() {
     chapters,
     selectedChapters,
     showOnlyUnmemorized,
+    isShuffled,
     currentVocabularies,
     handleBookSelect,
     handleChapterToggle,

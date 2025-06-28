@@ -7,6 +7,7 @@ interface WordControlsProps {
   isPlaying: boolean;
   isPronounced: boolean;
   showOnlyUnmemorized: boolean;
+  isShuffled: boolean;
   onShuffle: () => void;
   onPlay: () => void;
   onPronounce: () => void;
@@ -21,6 +22,7 @@ export default function WordControls({
   isPlaying,
   isPronounced,
   showOnlyUnmemorized,
+  isShuffled,
   onShuffle,
   onPlay,
   onPronounce,
@@ -38,8 +40,8 @@ export default function WordControls({
           <button
             onClick={onShuffle}
             className="ml-4 bg-white dark:bg-gray-700 p-2 rounded-full shadow-sm dark:shadow-gray-900/30 hover:shadow-md transition-shadow border border-gray-200 dark:border-gray-600 flex items-center text-sm dark:text-gray-300">
-            <Icon type="shuffle" customClassName="w-4 h-4 mr-1 text-indigo-600 dark:text-indigo-400" />
-            <span className="hidden sm:inline">섞기</span>
+            <Icon type={isShuffled ? "arrowLeft" : "shuffle"} customClassName="w-4 h-4 mr-1 text-indigo-600 dark:text-indigo-400" />
+            <span className="hidden sm:inline">{isShuffled ? '원복' : '섞기'}</span>
           </button>
           <button
             onClick={onPlay}
