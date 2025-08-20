@@ -31,9 +31,9 @@
   :root {
     --background: #0a0a0a;
     --foreground: #ededed;
-    --color-blue-medium: #75869C; /* Darker Blue for dark mode */
-    --color-green-medium: #8C9A8A; /* Darker Green for dark mode */
-    --color-yellow-medium: #D2B49E; /* Darker Yellow for dark mode */
+    --color-blue-medium: #75869C;
+    --color-green-medium: #8C9A8A;
+    --color-yellow-medium: #D2B49E;
     --color-pink-medium: #B97A7C;
     color: #c5d1e1;
   }
@@ -48,19 +48,70 @@
   input {
     color: black
   }
-
 }
 
 body {
   color: var(--foreground);
   background: var(--background);
   font-family: 'Pretendard-Regular', sans-serif;
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 input {
-  border-radius: 10px;
+  border-radius: 8px;
   background: var(--color-gray-10);
   &:focus {
-    outline: 1px solid var(--color-yellow-medium);
+    outline: 2px solid #3b82f6;
+    outline-offset: 2px;
   }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Focus styles for accessibility */
+*:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+/* Smooth transitions */
+* {
+  transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* Button hover effects */
+.btn-primary {
+  @apply bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2 rounded-lg transition-colors duration-200 shadow-sm hover:shadow-md;
+}
+
+.btn-secondary {
+  @apply bg-white dark:bg-gray-800 text-gray-900 dark:text-white font-medium px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200;
+}
+
+/* Card styles */
+.card {
+  @apply bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow duration-200;
+}
+
+/* Text utilities */
+.text-gradient {
+  @apply bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent;
 }
