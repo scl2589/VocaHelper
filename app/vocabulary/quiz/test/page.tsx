@@ -9,8 +9,9 @@ import FormCard from "@/components/forms/FormCard";
 interface QuizQuestion {
   question: string;
   correctAnswer: string;
-  options: string[];
+  options?: string[]; // Only for multiple choice
   type: 'word-to-definition' | 'definition-to-word';
+  answerType: 'multiple-choice' | 'text-input';
 }
 
 interface QuizResult {
@@ -32,12 +33,14 @@ export default function QuizTestPage() {
   const [quizStarted, setQuizStarted] = useState(false);
   const [quizCompleted, setQuizCompleted] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [textAnswer, setTextAnswer] = useState<string>('');
 
   const book = searchParams.get('book') || '';
   const chapters = searchParams.get('chapters') || '';
   const totalQuestions = parseInt(searchParams.get('totalQuestions') || '10');
   const timeLimit = parseInt(searchParams.get('timeLimit') || '30');
   const questionType = searchParams.get('questionType') as 'word-to-definition' | 'definition-to-word';
+  const answerType = searchParams.get('answerType') as 'multiple-choice' | 'text-input';
 
   // Load vocabularies
   useEffect(() => {
@@ -83,53 +86,73 @@ export default function QuizTestPage() {
         const allDefinitions = vocab.definitions.map(def => def.definition);
         const correctDefinition = allDefinitions[0] || '정의 없음'; // Fallback for empty definitions
         
-        // Generate wrong options from other vocabularies
+        // Generate wrong options from other vocabularies (only for multiple choice)
         const otherVocabularies = vocabularies.filter(v => v.id !== vocab.id);
         
         if (questionType === 'word-to-definition') {
-          const wrongOptions = otherVocabularies
-            .flatMap(v => v.definitions.map(def => def.definition))
-            .filter(def => def !== correctDefinition && def.trim() !== '')
-            .sort(() => Math.random() - 0.5)
-            .slice(0, 3);
-          
-          const options = [correctDefinition, ...wrongOptions].sort(() => Math.random() - 0.5);
-          
-          return {
-            question: vocab.word,
-            correctAnswer: correctDefinition,
-            options,
-            type: 'word-to-definition'
-          };
-        } else {
-          // For definition-to-word, we need to ensure we have enough words for options
-          const otherWords = otherVocabularies
-            .map(v => v.word)
-            .filter(word => word.trim() !== '')
-            .sort(() => Math.random() - 0.5)
-            .slice(0, 3);
-          
-          // If we don't have enough other words, we might need to adjust
-          const options = [vocab.word, ...otherWords];
-          
-          // Ensure we have at least 2 options (minimum for a quiz)
-          if (options.length < 2) {
-            options.push('추가 옵션 1', '추가 옵션 2');
+          if (answerType === 'multiple-choice') {
+            const wrongOptions = otherVocabularies
+              .flatMap(v => v.definitions.map(def => def.definition))
+              .filter(def => def !== correctDefinition && def.trim() !== '')
+              .sort(() => Math.random() - 0.5)
+              .slice(0, 3);
+            
+            const options = [correctDefinition, ...wrongOptions].sort(() => Math.random() - 0.5);
+            
+            return {
+              question: vocab.word,
+              correctAnswer: correctDefinition,
+              options,
+              type: 'word-to-definition',
+              answerType: 'multiple-choice'
+            };
+          } else {
+            return {
+              question: vocab.word,
+              correctAnswer: correctDefinition,
+              type: 'word-to-definition',
+              answerType: 'text-input'
+            };
           }
-          
-          return {
-            question: correctDefinition,
-            correctAnswer: vocab.word,
-            options: options.sort(() => Math.random() - 0.5),
-            type: 'definition-to-word'
-          };
+        } else {
+          if (answerType === 'multiple-choice') {
+            // For definition-to-word, we need to ensure we have enough words for options
+            const otherWords = otherVocabularies
+              .map(v => v.word)
+              .filter(word => word.trim() !== '')
+              .sort(() => Math.random() - 0.5)
+              .slice(0, 3);
+            
+            // If we don't have enough other words, we might need to adjust
+            const options = [vocab.word, ...otherWords];
+            
+            // Ensure we have at least 2 options (minimum for a quiz)
+            if (options.length < 2) {
+              options.push('추가 옵션 1', '추가 옵션 2');
+            }
+            
+            return {
+              question: correctDefinition,
+              correctAnswer: vocab.word,
+              options: options.sort(() => Math.random() - 0.5),
+              type: 'definition-to-word',
+              answerType: 'multiple-choice'
+            };
+          } else {
+            return {
+              question: correctDefinition,
+              correctAnswer: vocab.word,
+              type: 'definition-to-word',
+              answerType: 'text-input'
+            };
+          }
         }
       });
     };
 
     const quizQuestions = generateQuestions();
     setQuestions(quizQuestions);
-  }, [vocabularies, totalQuestions, questionType]);
+  }, [vocabularies, totalQuestions, questionType, answerType]);
 
   // Timer effect
   useEffect(() => {
@@ -151,6 +174,7 @@ export default function QuizTestPage() {
   const startQuiz = () => {
     setQuizStarted(true);
     setTimeLeft(timeLimit);
+    setTextAnswer('');
   };
 
   const handleAnswer = (answer: string) => {
@@ -162,7 +186,18 @@ export default function QuizTestPage() {
       return;
     }
     
-    const isCorrect = answer === currentQuestion.correctAnswer;
+    // Check if answer is correct based on answer type
+    let isCorrect: boolean;
+    if (currentQuestion.answerType === 'text-input') {
+      // For text input, check if user answer is included in correct answer
+      const userAnswerLower = answer.toLowerCase().trim();
+      const correctAnswerLower = currentQuestion.correctAnswer.toLowerCase().trim();
+      isCorrect = correctAnswerLower.includes(userAnswerLower) || userAnswerLower.includes(correctAnswerLower);
+    } else {
+      // For multiple choice, exact match
+      isCorrect = answer === currentQuestion.correctAnswer;
+    }
+    
     const timeSpent = timeLimit - timeLeft;
     
     const result: QuizResult = {
@@ -177,8 +212,21 @@ export default function QuizTestPage() {
     if (currentQuestionIndex < questions.length - 1) {
       setCurrentQuestionIndex(prev => prev + 1);
       setTimeLeft(timeLimit);
+      setTextAnswer(''); // Reset text answer for next question
     } else {
       setQuizCompleted(true);
+    }
+  };
+
+  const handleTextAnswerSubmit = () => {
+    if (textAnswer.trim()) {
+      handleAnswer(textAnswer.trim());
+    }
+  };
+
+  const handleTextAnswerKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleTextAnswerSubmit();
     }
   };
 
@@ -245,6 +293,12 @@ export default function QuizTestPage() {
                     <div className="text-gray-500 dark:text-gray-400">문제 유형</div>
                     <div className="font-medium">
                       {questionType === 'word-to-definition' ? '단어 → 뜻' : '뜻 → 단어'}
+                    </div>
+                  </div>
+                  <div className="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg">
+                    <div className="text-gray-500 dark:text-gray-400">답안 유형</div>
+                    <div className="font-medium">
+                      {answerType === 'multiple-choice' ? '객관식' : '주관식'}
                     </div>
                   </div>
                   <div className="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg">
@@ -320,11 +374,11 @@ export default function QuizTestPage() {
                           <div className="text-sm text-gray-600 dark:text-gray-400">
                             정답: {result.question.correctAnswer}
                           </div>
-                          {!result.isCorrect && (
-                            <div className="text-sm text-red-600 dark:text-red-400">
-                              선택: {result.userAnswer || '(시간 초과)'}
-                            </div>
-                          )}
+                                                     {!result.isCorrect && (
+                             <div className="text-sm text-red-600 dark:text-red-400">
+                               {result.question.answerType === 'text-input' ? '입력' : '선택'}: {result.userAnswer || '(시간 초과)'}
+                             </div>
+                           )}
                         </div>
                         <div className={`px-2 py-1 rounded text-xs font-medium ${
                           result.isCorrect 
@@ -384,7 +438,11 @@ export default function QuizTestPage() {
       <div className="max-w-2xl mx-auto">
         <FormCard
           title={`문제 ${currentQuestionIndex + 1} / ${questions.length}`}
-          description={questionType === 'word-to-definition' ? '단어를 보고 맞는 뜻을 선택하세요' : '뜻을 보고 맞는 단어를 선택하세요'}
+          description={
+            questionType === 'word-to-definition' 
+              ? (answerType === 'multiple-choice' ? '단어를 보고 맞는 뜻을 선택하세요' : '단어를 보고 맞는 뜻을 입력하세요')
+              : (answerType === 'multiple-choice' ? '뜻을 보고 맞는 단어를 선택하세요' : '뜻을 보고 맞는 단어를 입력하세요')
+          }
         >
           <div className="space-y-6">
             {/* Progress and Timer */}
@@ -415,23 +473,59 @@ export default function QuizTestPage() {
                 {currentQuestion.question}
               </div>
               
-              {/* Options */}
-              <div className="space-y-3">
-                {currentQuestion.options.map((option, index) => (
-                  <button
-                    key={index}
-                    onClick={() => handleAnswer(option)}
-                    className="w-full p-4 text-left border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:border-blue-300 dark:hover:border-blue-500 transition-all duration-200"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 bg-gray-100 dark:bg-gray-600 rounded-full flex items-center justify-center text-sm font-medium text-gray-700 dark:text-gray-300">
-                        {String.fromCharCode(65 + index)}
+              {/* Answer Input */}
+              {currentQuestion.answerType === 'multiple-choice' ? (
+                /* Multiple Choice Options */
+                <div className="space-y-3">
+                  {currentQuestion.options?.map((option, index) => (
+                    <button
+                      key={index}
+                      onClick={() => handleAnswer(option)}
+                      className="w-full p-4 text-left border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:border-blue-300 dark:hover:border-blue-500 transition-all duration-200"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 bg-gray-100 dark:bg-gray-600 rounded-full flex items-center justify-center text-sm font-medium text-gray-700 dark:text-gray-300">
+                          {String.fromCharCode(65 + index)}
+                        </div>
+                        <span className="text-gray-900 dark:text-white">{option}</span>
                       </div>
-                      <span className="text-gray-900 dark:text-white">{option}</span>
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                /* Text Input */
+                <div className="space-y-4">
+                  <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3 mb-2">
+                    <div className="flex items-center gap-2 text-blue-700 dark:text-blue-300 text-sm">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <span>정답의 일부만 입력해도 인정됩니다</span>
                     </div>
+                  </div>
+                  <div className="text-left">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      답안을 입력하세요
+                    </label>
+                    <input
+                      type="text"
+                      value={textAnswer}
+                      onChange={(e) => setTextAnswer(e.target.value)}
+                      onKeyPress={handleTextAnswerKeyPress}
+                      placeholder={questionType === 'word-to-definition' ? '뜻을 입력하세요' : '단어를 입력하세요'}
+                      className="w-full p-4 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white bg-white dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400"
+                      autoFocus
+                    />
+                  </div>
+                  <button
+                    onClick={handleTextAnswerSubmit}
+                    disabled={!textAnswer.trim()}
+                    className="w-full px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-medium rounded-lg transition-colors duration-200 disabled:cursor-not-allowed"
+                  >
+                    답안 제출
                   </button>
-                ))}
-              </div>
+                </div>
+              )}
             </div>
           </div>
         </FormCard>

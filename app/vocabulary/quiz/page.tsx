@@ -17,6 +17,7 @@ interface QuizSettings {
   totalQuestions: number;
   timeLimit: number; // seconds
   questionType: 'word-to-definition' | 'definition-to-word';
+  answerType: 'multiple-choice' | 'text-input';
 }
 
 export default function QuizPage() {
@@ -31,7 +32,8 @@ export default function QuizPage() {
   const [quizSettings, setQuizSettings] = useState<QuizSettings>({
     totalQuestions: 10,
     timeLimit: 30,
-    questionType: 'word-to-definition'
+    questionType: 'word-to-definition',
+    answerType: 'multiple-choice'
   });
 
   // Load books on mount
@@ -121,7 +123,8 @@ export default function QuizPage() {
       chapters: selectedChapters.join(','),
       totalQuestions: availableQuestions.toString(),
       timeLimit: quizSettings.timeLimit.toString(),
-      questionType: quizSettings.questionType
+      questionType: quizSettings.questionType,
+      answerType: quizSettings.answerType
     });
 
     router.push(`/vocabulary/quiz/test?${params.toString()}`);
@@ -253,6 +256,42 @@ export default function QuizPage() {
                     <div>
                       <div className="font-medium text-gray-900 dark:text-white">뜻 → 단어</div>
                       <div className="text-sm text-gray-500 dark:text-gray-400">뜻을 보고 맞는 단어를 선택</div>
+                    </div>
+                  </label>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                  답안 유형
+                </label>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <label className="flex items-center p-3 border border-gray-300 dark:border-gray-600 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700">
+                    <input
+                      type="radio"
+                      name="answerType"
+                      value="multiple-choice"
+                      checked={quizSettings.answerType === 'multiple-choice'}
+                      onChange={(e) => setQuizSettings(prev => ({ ...prev, answerType: e.target.value as any }))}
+                      className="mr-3"
+                    />
+                    <div>
+                      <div className="font-medium text-gray-900 dark:text-white">객관식</div>
+                      <div className="text-sm text-gray-500 dark:text-gray-400">4지선다로 답안 선택</div>
+                    </div>
+                  </label>
+                  <label className="flex items-center p-3 border border-gray-300 dark:border-gray-600 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700">
+                    <input
+                      type="radio"
+                      name="answerType"
+                      value="text-input"
+                      checked={quizSettings.answerType === 'text-input'}
+                      onChange={(e) => setQuizSettings(prev => ({ ...prev, answerType: e.target.value as any }))}
+                      className="mr-3"
+                    />
+                    <div>
+                      <div className="font-medium text-gray-900 dark:text-white">주관식</div>
+                      <div className="text-sm text-gray-500 dark:text-gray-400">직접 답안을 입력</div>
                     </div>
                   </label>
                 </div>
