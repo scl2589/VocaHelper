@@ -1,49 +1,31 @@
 'use client'
 
-import { useState, FormEvent, useEffect } from "react";
+import { FormEvent } from "react";
 import { createVocabulary } from "@/actions/vocabulary";
-import { getVocabularyBooks } from "@/actions/vocabularyBook";
 import Form from 'next/form';
-import {useRouter} from "next/navigation";
-import Link from "next/link";
-import {Book} from '@/types/book'
-import Title from "@/components/Title";
+import { useRouter } from "next/navigation";
+import { useVocabularyForm } from "@/hooks/useVocabularyForm";
+import PageHeader from "@/components/forms/PageHeader";
+import FormCard from "@/components/forms/FormCard";
+import BookSelector from "@/components/forms/BookSelector";
+import DefinitionFields from "@/components/forms/DefinitionFields";
+import SubmitButton from "@/components/forms/SubmitButton";
 
 export default function AddPage() {
-    const [definitions, setDefinitions] = useState([{ id: 0, partOfSpeech: "", definition: "" }]);
-    const [books, setBooks] = useState<Book[]>([]);
     const router = useRouter();
-
-    useEffect(() => {
-        (async() => {
-            const data = await getVocabularyBooks();
-            setBooks(data);
-        })();
-    }, [])
-
-    // 입력 필드 추가
-    const addDefinitionField = () => {
-        setDefinitions([...definitions, { id: definitions.length, partOfSpeech: "", definition: "" }]);
-    };
-
-    // 입력 필드 삭제
-    const removeDefinitionField = () => {
-        if (definitions.length > 1) {
-            setDefinitions(definitions.slice(0, -1));
-        }
-    };
-
-    // 입력값 변경 핸들러
-    const handleChange = (index: number, field: "partOfSpeech" | "definition", value: string) => {
-        setDefinitions((prev) =>
-            prev.map((item, i) =>
-                i === index ? { ...item, [field]: value } : item
-            )
-        );
-    };
+    const {
+        definitions,
+        books,
+        loading,
+        setLoading,
+        addDefinitionField,
+        removeDefinitionField,
+        handleDefinitionChange,
+    } = useVocabularyForm();
 
     const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
+        setLoading(true);
         const formData = new FormData(e.target as HTMLFormElement);
 
         try {
@@ -53,85 +35,53 @@ export default function AddPage() {
             }
         } catch (error) {
             console.error("Error:", error);
+        } finally {
+            setLoading(false);
         }
     };
 
-
     return (
-        <div>
-            <Title title="단어 추가"/>
-            <Form onSubmit={handleSubmit} className="flex flex-col gap-4" action={""}>
-                <div className="flex flex-col gap-2">
-                    <label className="text-lg">단어장</label>
-                    <div className="flex flex-row items-center justify-between">
-                        <select className="bg-gray-10 p-2 border rounded-md">
-                            {books.map((book) => <option key={book.name} value={book.name}>{book.name}</option>)}
-                        </select>
-                        <Link href="/vocabulary/books/add" className="text-sm hover:text-pink-medium hover:scale-125">단어책 추가</Link>
-                    </div>
-                </div>
-                <div className="flex flex-col gap-2">
-                    <label className="text-lg">단어</label>
-                    <input type="text" name="word" className="bg-gray-10 p-2 border rounded-md" required/>
-                </div>
-                <div className="flex flex-col gap-2">
-                    <div className="flex justify-between items-center">
-                        <label className="text-lg">뜻</label>
-                        <div className="flex gap-2">
-                            <button
-                                type="button"
-                                onClick={addDefinitionField}
-                                className="px-3 py-1 bg-gray-300 text-black rounded-md hover:bg-gray-400"
-                            >
-                                +
-                            </button>
-                            <button
-                                type="button"
-                                onClick={removeDefinitionField}
-                                className="px-3 py-1 bg-red-300 text-white rounded-md hover:bg-red-400"
-                                disabled={definitions.length <= 1}
-                            >
-                                -
-                            </button>
-                        </div>
-                    </div>
-                    <div>
-                        {definitions.map((item, index) => (
-                            <div key={item.id} className="flex flex-row gap-2 mb-2 items-center">
-                                <select
-                                    name="partOfSpeech"
-                                    className="bg-gray-10 p-2 border rounded-md w-1/4"
-                                    value={item.partOfSpeech}
-                                    onChange={(e) => handleChange(index, "partOfSpeech", e.target.value)}
-                                >
-                                    <option value="">없음</option>
-                                    <option value="명">명사</option>
-                                    <option value="동">동사</option>
-                                    <option value="형">형용사</option>
-                                    <option value="부">부사</option>
-                                    <option value="전치사">전치사</option>
-                                    <option value="접속사">접속사</option>
-                                </select>
-                                <input
-                                    type="text"
-                                    name="definition"
-                                    className="bg-gray-10 p-2 border rounded-md w-3/4"
-                                    value={item.definition}
-                                    onChange={(e) => handleChange(index, "definition", e.target.value)}
-                                    required
-                                />
-                            </div>
-                        ))}
-                    </div>
-                </div>
+        <div className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100 dark:from-gray-900 dark:to-gray-800 px-4 py-6 md:px-8 md:py-10">
+            <div className="max-w-4xl mx-auto">
+                <PageHeader 
+                    title="단어 추가"
+                    actionText="엑셀로 추가"
+                    actionHref="/vocabulary/add/excel"
+                />
 
-                <button
-                    type="submit"
-                    className="px-4 py-2 bg-blue-300 text-white rounded-md hover:bg-blue-medium w-fit"
+                <FormCard
+                    title="새로운 단어 추가"
+                    description="단어와 뜻을 입력하여 새로운 단어를 추가하세요"
                 >
-                    단어 추가하기
-                </button>
-            </Form>
+                    <Form onSubmit={handleSubmit} className="space-y-6" action={""}>
+                        <BookSelector books={books} />
+
+                        <div className="space-y-2">
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                단어
+                            </label>
+                            <input 
+                                type="text" 
+                                name="word" 
+                                className="w-full bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400" 
+                                placeholder="단어를 입력하세요"
+                                required
+                            />
+                        </div>
+
+                        <DefinitionFields
+                            definitions={definitions}
+                            onAdd={addDefinitionField}
+                            onRemove={removeDefinitionField}
+                            onChange={handleDefinitionChange}
+                        />
+
+                        <SubmitButton loading={loading}>
+                            단어 추가하기
+                        </SubmitButton>
+                    </Form>
+                </FormCard>
+            </div>
         </div>
     );
 }
