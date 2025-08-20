@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { getVocabulariesByChapters, getVocabulariesByBook } from "@/actions/vocabulary";
 import { Vocabulary } from '@/types/vocabulary';
@@ -177,7 +177,7 @@ export default function QuizTestPage() {
     setTextAnswer('');
   };
 
-  const handleAnswer = (answer: string) => {
+  const handleAnswer = useCallback((answer: string) => {
     const currentQuestion = questions[currentQuestionIndex];
     
     // Safety check
@@ -216,7 +216,7 @@ export default function QuizTestPage() {
     } else {
       setQuizCompleted(true);
     }
-  };
+  }, [questions, currentQuestionIndex, timeLimit, timeLeft]);
 
   const handleTextAnswerSubmit = () => {
     if (textAnswer.trim()) {
