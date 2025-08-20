@@ -1,16 +1,20 @@
 'use client'
 
-import { FormEvent } from "react";
+import { FormEvent, useState } from "react";
 import { createVocabularyBook } from "@/actions/vocabularyBook";
 import Form from 'next/form';
-import {useRouter} from "next/navigation";
-import Title from "@/components/Title";
+import { useRouter } from "next/navigation";
+import PageHeader from "@/components/forms/PageHeader";
+import FormCard from "@/components/forms/FormCard";
+import SubmitButton from "@/components/forms/SubmitButton";
 
 export default function VocabularyBookAddPage() {
     const router = useRouter();
+    const [loading, setLoading] = useState(false);
 
     const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
+        setLoading(true);
         const formData = new FormData(e.target as HTMLFormElement);
 
         try {
@@ -20,25 +24,47 @@ export default function VocabularyBookAddPage() {
             }
         } catch (error) {
             console.error("Error:", error);
+        } finally {
+            setLoading(false);
         }
     };
 
-
     return (
-        <div>
-            <Title title="단어장 추가"/>
-            <Form onSubmit={handleSubmit} className="flex flex-col gap-4" action={""}>
-                <div className="flex flex-col gap-2">
-                    <label className="text-lg">단어장 이름</label>
-                    <input type="text" name="name" className="bg-gray-10 p-2 border rounded-md" required />
-                </div>
-                <button
-                    type="submit"
-                    className="px-4 py-2 bg-blue-300 text-white rounded-md hover:bg-blue-medium w-fit"
+        <div className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100 dark:from-gray-900 dark:to-gray-800 px-4 py-6 md:px-8 md:py-10">
+            <div className="max-w-4xl mx-auto">
+                <PageHeader 
+                    title="단어책 추가"
+                    actionText="단어책 목록"
+                    actionHref="/vocabulary/books"
+                />
+
+                <FormCard
+                    title="새로운 단어책 만들기"
+                    description="새로운 단어책을 생성하여 단어들을 체계적으로 관리하세요"
                 >
-                    단어장 추가하기
-                </button>
-            </Form>
+                    <Form onSubmit={handleSubmit} className="space-y-6" action={""}>
+                        <div className="space-y-2">
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                단어책 이름
+                            </label>
+                            <input 
+                                type="text" 
+                                name="name" 
+                                className="w-full bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400" 
+                                placeholder="예: 토익 단어장, 회화 필수 단어"
+                                required 
+                            />
+                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                                단어책의 목적이나 주제를 반영한 이름을 지어주세요
+                            </p>
+                        </div>
+
+                        <SubmitButton loading={loading}>
+                            단어책 만들기
+                        </SubmitButton>
+                    </Form>
+                </FormCard>
+            </div>
         </div>
     );
 }

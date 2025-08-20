@@ -48,7 +48,17 @@ export default function VocabularyPage() {
         <div className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100 dark:from-gray-900 dark:to-gray-800 px-4 py-6 md:px-8 md:py-10">
             <div className="max-w-6xl mx-auto">
                 <div className="flex items-center justify-between w-full mb-6">
-                    <Title title="단어 목록"/>
+                    <div className="flex items-center gap-4">
+                        <Title title="단어 목록"/>
+                        {book && (
+                            <div className="flex items-center gap-2 px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full text-sm font-medium">
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                                </svg>
+                                {book}
+                            </div>
+                        )}
+                    </div>
                     <AddButton path="/vocabulary/add" />
                 </div>
 

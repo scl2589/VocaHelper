@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { getVocabularyBooks } from '@/actions/vocabularyBook';
 import { getVocabularyChapters } from '@/actions/vocabularyChapter';
 import { getVocabularies, getVocabulariesByChapters, getVocabulariesByBook } from '@/actions/vocabulary';
@@ -7,6 +8,7 @@ import { Chapter } from '@/types/chapter';
 import { Vocabulary } from '@/types/vocabulary';
 
 export function useBookChapterFilter() {
+  const searchParams = useSearchParams();
   const [books, setBooks] = useState<Book[]>([]);
   const [book, setBook] = useState<string>('');
   const [chapters, setChapters] = useState<Chapter[]>([]);
@@ -22,6 +24,14 @@ export function useBookChapterFilter() {
     };
     loadBooks();
   }, []);
+
+  // Handle URL parameter for book filtering
+  useEffect(() => {
+    const bookParam = searchParams.get('book');
+    if (bookParam && bookParam !== book) {
+      setBook(bookParam);
+    }
+  }, [searchParams, book]);
 
   // Load chapters when book changes
   useEffect(() => {
