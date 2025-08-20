@@ -6,7 +6,7 @@ export type Definition = {
 export type CreateVocabulary = {
     word: string;
     book: string;
-    chapterId?: string;
+    chapter_id?: string;
     definitions: Definition[],
     count: number;
 }
@@ -16,7 +16,7 @@ export type Vocabulary = {
     createdAt: Date;
     word: string;
     book: string;
-    chapterId?: string;
+    chapter_id?: string;
     memorized?: boolean;
     definitions: Definition[],
     count: number;

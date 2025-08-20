@@ -307,3 +307,17 @@ export async function createVocabularyFromMultipleFileSheets(formData: FormData)
 
     revalidatePath("/");
 }
+
+export async function getVocabulariesByBook(bookName: string): Promise<Vocabulary[]> {
+    const { data, error } = await supabase
+        .from("vocabularies")
+        .select()
+        .eq("book", bookName);
+
+    if (error) {
+        console.error("Error fetching vocabularies by book:", error);
+        return [];
+    }
+
+    return data || [];
+}

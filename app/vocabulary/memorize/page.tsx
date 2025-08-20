@@ -4,7 +4,7 @@ import { useEffect } from 'react';
 
 import Title from '@/components/Title';
 import AddButton from '@/components/addButton';
-import BookChapterSelector from './components/BookChapterSelector';
+import BookChapterSelector from '@/components/BookChapterSelector';
 import MemorizeContent from './components/MemorizeContent';
 
 import { useVocabularyData } from './hooks/useVocabularyData';
