@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import Logo from '@/components/Logo'
+import Link from 'next/link'
 
 export const metadata: Metadata = {
   title: "Voca Helper - 스마트한 단어 학습",
@@ -23,18 +24,18 @@ export default function RootLayout({
             <div className="flex justify-between items-center">
               <Logo />
               <nav className="hidden md:flex items-center gap-8">
-                <a href="/vocabulary/add" className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200 font-medium">
+                <Link href="/vocabulary/add" className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200 font-medium">
                   단어 추가
-                </a>
-                <a href="/vocabulary" className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200 font-medium">
+                </Link>
+                <Link href="/vocabulary" className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200 font-medium">
                   단어 리스트
-                </a>
-                <a href="/vocabulary/books" className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200 font-medium">
+                </Link>
+                <Link href="/vocabulary/books" className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200 font-medium">
                   단어책
-                </a>
-                <a href="/vocabulary/memorize" className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition-colors duration-200 shadow-sm hover:shadow-md">
+                </Link>
+                <Link href="/vocabulary/memorize" className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition-colors duration-200 shadow-sm hover:shadow-md">
                   학습 시작
-                </a>
+                </Link>
               </nav>
               
               <button className="md:hidden p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
