@@ -1,12 +1,12 @@
 'use client';
 
-import { useState, useEffect } from "react";
 import { deleteVocabulary } from "@/actions/vocabulary";
 import AddButton from "@/components/addButton";
 import Title from "@/components/Title";
 import BookChapterSelector from "@/components/BookChapterSelector";
-import { Vocabulary, Definition } from "@/types/vocabulary";
+import { Definition } from "@/types/vocabulary";
 import { useBookChapterFilter } from "@/hooks/useBookChapterFilter";
+import Link from "next/link";
 
 export default function VocabularyPage() {
     const {
@@ -59,7 +59,18 @@ export default function VocabularyPage() {
                             </div>
                         )}
                     </div>
-                    <AddButton path="/vocabulary/add" />
+                    <div className="flex items-center gap-3">
+                        <Link 
+                            href="/vocabulary/quiz"
+                            className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg transition-colors duration-200 shadow-sm hover:shadow-md"
+                        >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                            </svg>
+                            퀴즈 풀기
+                        </Link>
+                        <AddButton path="/vocabulary/add" />
+                    </div>
                 </div>
 
                 <BookChapterSelector
