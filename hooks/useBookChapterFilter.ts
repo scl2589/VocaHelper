@@ -16,7 +16,6 @@ export function useBookChapterFilter() {
   const [vocabularies, setVocabularies] = useState<Vocabulary[]>([]);
   const [filteredVocabularies, setFilteredVocabularies] = useState<Vocabulary[]>([]);
 
-  // Load books on mount
   useEffect(() => {
     const loadBooks = async () => {
       const booksData = await getVocabularyBooks();
@@ -25,7 +24,6 @@ export function useBookChapterFilter() {
     loadBooks();
   }, []);
 
-  // Handle URL parameter for book filtering
   useEffect(() => {
     const bookParam = searchParams.get('book');
     if (bookParam && bookParam !== book) {
@@ -33,13 +31,11 @@ export function useBookChapterFilter() {
     }
   }, [searchParams, book]);
 
-  // Load chapters when book changes
   useEffect(() => {
     const loadChapters = async () => {
       if (book) {
         const chaptersData = await getVocabularyChapters(book);
         setChapters(chaptersData);
-        // Reset selected chapters when book changes
         setSelectedChapters([]);
       } else {
         setChapters([]);
@@ -49,21 +45,17 @@ export function useBookChapterFilter() {
     loadChapters();
   }, [book]);
 
-  // Load vocabularies when book or selected chapters change
   useEffect(() => {
     const loadVocabularies = async () => {
       if (selectedChapters.length > 0) {
-        // If specific chapters are selected, show only those chapters' vocabularies
         const vocabulariesData = await getVocabulariesByChapters(selectedChapters);
         setVocabularies(vocabulariesData);
         setFilteredVocabularies(vocabulariesData);
       } else if (book) {
-        // If only book is selected (no specific chapters), show all vocabularies from that book
         const bookVocabularies = await getVocabulariesByBook(book);
         setVocabularies(bookVocabularies);
         setFilteredVocabularies(bookVocabularies);
       } else {
-        // If no book selected, show all vocabularies
         const vocabulariesData = await getVocabularies();
         setVocabularies(vocabulariesData);
         setFilteredVocabularies(vocabulariesData);
