@@ -169,7 +169,7 @@ export default function QuizTestPage() {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [quizStarted, quizCompleted, timeLimit]);
+  }, [quizStarted, quizCompleted, timeLimit, handleAnswer]);
 
   const startQuiz = () => {
     setQuizStarted(true);

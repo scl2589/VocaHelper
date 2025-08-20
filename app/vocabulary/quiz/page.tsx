@@ -11,7 +11,7 @@ import { Vocabulary } from '@/types/vocabulary';
 import PageHeader from "@/components/forms/PageHeader";
 import FormCard from "@/components/forms/FormCard";
 import BookChapterSelector from "@/components/BookChapterSelector";
-import Link from "next/link";
+
 
 interface QuizSettings {
   totalQuestions: number;
@@ -236,7 +236,7 @@ export default function QuizPage() {
                       name="questionType"
                       value="word-to-definition"
                       checked={quizSettings.questionType === 'word-to-definition'}
-                      onChange={(e) => setQuizSettings(prev => ({ ...prev, questionType: e.target.value as any }))}
+                      onChange={(e) => setQuizSettings(prev => ({ ...prev, questionType: e.target.value as 'word-to-definition' | 'definition-to-word' }))}
                       className="mr-3"
                     />
                     <div>
@@ -250,7 +250,7 @@ export default function QuizPage() {
                       name="questionType"
                       value="definition-to-word"
                       checked={quizSettings.questionType === 'definition-to-word'}
-                      onChange={(e) => setQuizSettings(prev => ({ ...prev, questionType: e.target.value as any }))}
+                      onChange={(e) => setQuizSettings(prev => ({ ...prev, questionType: e.target.value as 'word-to-definition' | 'definition-to-word' }))}
                       className="mr-3"
                     />
                     <div>
@@ -272,7 +272,7 @@ export default function QuizPage() {
                       name="answerType"
                       value="multiple-choice"
                       checked={quizSettings.answerType === 'multiple-choice'}
-                      onChange={(e) => setQuizSettings(prev => ({ ...prev, answerType: e.target.value as any }))}
+                      onChange={(e) => setQuizSettings(prev => ({ ...prev, answerType: e.target.value as 'multiple-choice' | 'text-input' }))}
                       className="mr-3"
                     />
                     <div>
@@ -286,7 +286,7 @@ export default function QuizPage() {
                       name="answerType"
                       value="text-input"
                       checked={quizSettings.answerType === 'text-input'}
-                      onChange={(e) => setQuizSettings(prev => ({ ...prev, answerType: e.target.value as any }))}
+                      onChange={(e) => setQuizSettings(prev => ({ ...prev, answerType: e.target.value as 'multiple-choice' | 'text-input' }))}
                       className="mr-3"
                     />
                     <div>
