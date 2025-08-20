@@ -28,5 +28,12 @@ export const FEATURES = [
     title: '단어책',
     description: '주제별로 단어를 분류하여 체계적인 학습 진행',
     color: FEATURE_COLORS.orange
+  },
+  {
+    href: '/vocabulary/quiz',
+    iconType: 'quiz',
+    title: '퀴즈',
+    description: '다양한 유형의 퀴즈로 학습한 단어를 복습하고 점검',
+    color: FEATURE_COLORS.red
   }
 ] as const;

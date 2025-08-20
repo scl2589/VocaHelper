@@ -18,5 +18,10 @@ export const FEATURE_COLORS = {
     border: 'orange-300',
     background: 'orange-50 to-orange-100 dark:from-orange-900/20 dark:to-orange-800/20',
     icon: 'orange-500 to-orange-600'
+  },
+  red: {
+    border: 'red-300',
+    background: 'red-50 to-red-100 dark:from-red-900/20 dark:to-red-800/20',
+    icon: 'red-500 to-red-600'
   }
 } as const;

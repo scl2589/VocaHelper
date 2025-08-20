@@ -7,8 +7,9 @@ import BookChapterSelector from "@/components/BookChapterSelector";
 import { Definition } from "@/types/vocabulary";
 import { useBookChapterFilter } from "@/hooks/useBookChapterFilter";
 import Link from "next/link";
+import { Suspense } from "react";
 
-export default function VocabularyPage() {
+function VocabularyContent() {
     const {
         books,
         book,
@@ -177,5 +178,24 @@ export default function VocabularyPage() {
                 </div>
             </div>
         </div>
+    );
+}
+
+function LoadingFallback() {
+    return (
+        <div className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center">
+            <div className="text-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                <p className="text-gray-600 dark:text-gray-400">단어 목록을 불러오는 중...</p>
+            </div>
+        </div>
+    );
+}
+
+export default function VocabularyPage() {
+    return (
+        <Suspense fallback={<LoadingFallback />}>
+            <VocabularyContent />
+        </Suspense>
     );
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { getVocabularyBooks } from "@/actions/vocabularyBook";
 import { getVocabularyChapters } from "@/actions/vocabularyChapter";
@@ -20,7 +20,7 @@ interface QuizSettings {
   answerType: 'multiple-choice' | 'text-input';
 }
 
-export default function QuizPage() {
+function QuizContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   
@@ -311,5 +311,24 @@ export default function QuizPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+function LoadingFallback() {
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+        <p className="text-gray-600 dark:text-gray-400">퀴즈 설정을 불러오는 중...</p>
+      </div>
+    </div>
+  );
+}
+
+export default function QuizPage() {
+  return (
+    <Suspense fallback={<LoadingFallback />}>
+      <QuizContent />
+    </Suspense>
   );
 }

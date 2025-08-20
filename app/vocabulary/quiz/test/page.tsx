@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { getVocabulariesByChapters, getVocabulariesByBook } from "@/actions/vocabulary";
 import { Vocabulary } from '@/types/vocabulary';
@@ -21,7 +21,7 @@ interface QuizResult {
   timeSpent: number;
 }
 
-export default function QuizTestPage() {
+function QuizTestContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   
@@ -154,29 +154,6 @@ export default function QuizTestPage() {
     setQuestions(quizQuestions);
   }, [vocabularies, totalQuestions, questionType, answerType]);
 
-  // Timer effect
-  useEffect(() => {
-    if (!quizStarted || quizCompleted || timeLimit === 0) return;
-
-    const timer = setInterval(() => {
-      setTimeLeft(prev => {
-        if (prev <= 1) {
-          handleAnswer(''); // Time's up, mark as incorrect
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-
-    return () => clearInterval(timer);
-  }, [quizStarted, quizCompleted, timeLimit, handleAnswer]);
-
-  const startQuiz = () => {
-    setQuizStarted(true);
-    setTimeLeft(timeLimit);
-    setTextAnswer('');
-  };
-
   const handleAnswer = useCallback((answer: string) => {
     const currentQuestion = questions[currentQuestionIndex];
     
@@ -217,6 +194,30 @@ export default function QuizTestPage() {
       setQuizCompleted(true);
     }
   }, [questions, currentQuestionIndex, timeLimit, timeLeft]);
+
+
+  // Timer effect
+  useEffect(() => {
+    if (!quizStarted || quizCompleted || timeLimit === 0) return;
+
+    const timer = setInterval(() => {
+      setTimeLeft(prev => {
+        if (prev <= 1) {
+          handleAnswer(''); // Time's up, mark as incorrect
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [quizStarted, quizCompleted, timeLimit, handleAnswer]);
+
+  const startQuiz = () => {
+    setQuizStarted(true);
+    setTimeLeft(timeLimit);
+    setTextAnswer('');
+  };
 
   const handleTextAnswerSubmit = () => {
     if (textAnswer.trim()) {
@@ -531,5 +532,24 @@ export default function QuizTestPage() {
         </FormCard>
       </div>
     </div>
+  );
+}
+
+function LoadingFallback() {
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+        <p className="text-gray-600 dark:text-gray-400">퀴즈를 준비하는 중...</p>
+      </div>
+    </div>
+  );
+}
+
+export default function QuizTestPage() {
+  return (
+    <Suspense fallback={<LoadingFallback />}>
+      <QuizTestContent />
+    </Suspense>
   );
 }
