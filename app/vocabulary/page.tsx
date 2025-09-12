@@ -8,7 +8,7 @@ import WordListCard from "@/components/WordListCard";
 import { Definition } from "@/types/vocabulary";
 import { useBookChapterFilter } from "@/hooks/useBookChapterFilter";
 import Link from "next/link";
-import { Suspense, useState } from "react";
+import { Suspense, useState, useEffect } from "react";
 
 function VocabularyContent() {
     const {
@@ -25,6 +25,7 @@ function VocabularyContent() {
 
     const [showDefinitions, setShowDefinitions] = useState(false);
     const [isShuffled, setIsShuffled] = useState(false);
+    const [showScrollTop, setShowScrollTop] = useState(false);
 
     const toggleDefinitions = () => {
         setShowDefinitions(!showDefinitions);
@@ -33,6 +34,23 @@ function VocabularyContent() {
     const shuffleWords = () => {
         setIsShuffled(!isShuffled);
     };
+
+    const scrollToTop = () => {
+        window.scrollTo({
+            top: 0,
+            behavior: 'smooth'
+        });
+    };
+
+    // 스크롤 이벤트 리스너
+    useEffect(() => {
+        const handleScroll = () => {
+            setShowScrollTop(window.scrollY > 300);
+        };
+
+        window.addEventListener('scroll', handleScroll);
+        return () => window.removeEventListener('scroll', handleScroll);
+    }, []);
 
     // 셔플된 단어 목록 생성
     const displayVocabularies = isShuffled 
@@ -177,6 +195,19 @@ function VocabularyContent() {
                     </div>
                 )}
             </div>
+
+            {/* 맨 위로 이동 버튼 */}
+            {showScrollTop && (
+                <button
+                    onClick={scrollToTop}
+                    className="fixed bottom-4 right-4 md:bottom-6 md:right-6 z-50 bg-blue-600 hover:bg-blue-700 text-white p-3 md:p-3 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 touch-manipulation"
+                    aria-label="맨 위로 이동"
+                >
+                    <svg className="w-6 h-6 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
+                    </svg>
+                </button>
+            )}
         </div>
     );
 }
