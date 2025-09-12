@@ -4,10 +4,11 @@ import { deleteVocabulary } from "@/actions/vocabulary";
 import AddButton from "@/components/addButton";
 import Title from "@/components/Title";
 import BookChapterSelector from "@/components/BookChapterSelector";
+import WordListCard from "@/components/WordListCard";
 import { Definition } from "@/types/vocabulary";
 import { useBookChapterFilter } from "@/hooks/useBookChapterFilter";
 import Link from "next/link";
-import { Suspense } from "react";
+import { Suspense, useState } from "react";
 
 function VocabularyContent() {
     const {
@@ -21,6 +22,12 @@ function VocabularyContent() {
         selectAllChapters,
         clearAllChapters,
     } = useBookChapterFilter();
+
+    const [showDefinitions, setShowDefinitions] = useState(false);
+
+    const toggleDefinitions = () => {
+        setShowDefinitions(!showDefinitions);
+    };
 
     const handleDelete = async (id: string) => {
         const confirmed = window.confirm("정말 삭제하시겠습니까?");
@@ -48,27 +55,27 @@ function VocabularyContent() {
     return (
         <div className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100 dark:from-gray-900 dark:to-gray-800 px-4 py-6 md:px-8 md:py-10">
             <div className="max-w-6xl mx-auto">
-                <div className="flex items-center justify-between w-full mb-6">
-                    <div className="flex items-center gap-4">
+                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
                         <Title title="단어 목록"/>
                         {book && (
-                            <div className="flex items-center gap-2 px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full text-sm font-medium">
+                            <div className="flex items-center gap-2 px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full text-sm font-medium w-fit">
                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
                                 </svg>
-                                {book}
+                                <span className="truncate">{book}</span>
                             </div>
                         )}
                     </div>
-                    <div className="flex items-center gap-3">
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
                         <Link 
                             href="/vocabulary/quiz"
-                            className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg transition-colors duration-200 shadow-sm hover:shadow-md"
+                            className="flex items-center justify-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg transition-colors duration-200 shadow-sm hover:shadow-md"
                         >
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
                             </svg>
-                            퀴즈 풀기
+                            <span className="whitespace-nowrap">퀴즈 풀기</span>
                         </Link>
                         <AddButton path="/vocabulary/add" />
                     </div>
@@ -86,24 +93,28 @@ function VocabularyContent() {
                     showQuickActions={true}
                 />
 
-                <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden">
-                    <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                                    단어 목록
-                                </h3>
-                                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                                    {getFilterDescription()}
-                                </p>
-                            </div>
+                {/* 헤더 정보 */}
+                <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 md:p-6 mb-6">
+                    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                        <div>
+                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                                단어 목록
+                            </h3>
+                            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                                {getFilterDescription()}
+                            </p>
+                        </div>
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-3 md:gap-4">
                             <span className="text-sm text-gray-500 dark:text-gray-400">
                                 총 {filteredVocabularies.length}개 단어
                             </span>
                         </div>
                     </div>
+                </div>
 
-                    {filteredVocabularies.length === 0 ? (
+                {/* 단어 카드들 */}
+                {filteredVocabularies.length === 0 ? (
+                    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
                         <div className="flex flex-col items-center justify-center py-12">
                             <svg
                                 className="w-16 h-16 text-gray-300 dark:text-gray-600 mb-4"
@@ -126,56 +137,20 @@ function VocabularyContent() {
                                     : '단어를 추가해보세요!'}
                             </p>
                         </div>
-                    ) : (
-                        <div className="divide-y divide-gray-200 dark:divide-gray-700">
-                            {filteredVocabularies.map((vocab) => (
-                                <div key={vocab.id} className="p-6 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                                    <div className="flex flex-col md:flex-row md:items-center gap-4">
-                                        <div className="flex-1">
-                                            <div className="flex items-center gap-3 mb-2">
-                                                <h4 className="text-xl font-semibold text-gray-900 dark:text-white">
-                                                    {vocab.word}
-                                                </h4>
-                                                <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                                                    vocab.memorized 
-                                                        ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
-                                                        : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300'
-                                                }`}>
-                                                    {vocab.memorized ? '외웠어요' : '어려워요'}
-                                                </span>
-                                            </div>
-                                            
-                                            <div className="space-y-1">
-                                                {vocab.definitions.map(({ definition, partOfSpeech }: Definition, index) => (
-                                                    <div key={index} className="text-gray-600 dark:text-gray-300">
-                                                        {partOfSpeech && (
-                                                            <span className="inline-block bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 px-2 py-0.5 rounded text-xs mr-2">
-                                                                {partOfSpeech}
-                                                            </span>
-                                                        )}
-                                                        {definition}
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        </div>
-                                        
-                                        <div className="flex items-center gap-2">
-                                            <button
-                                                onClick={() => handleDelete(vocab.id)}
-                                                className="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-                                                title="삭제"
-                                            >
-                                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                                </svg>
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    )}
-                </div>
+                    </div>
+                ) : (
+                    <div className="space-y-3 md:space-y-4">
+                        {filteredVocabularies.map((vocab) => (
+                            <WordListCard
+                                key={vocab.id}
+                                vocab={vocab}
+                                onDelete={handleDelete}
+                                showDefinitions={showDefinitions}
+                                onToggleDefinitions={toggleDefinitions}
+                            />
+                        ))}
+                    </div>
+                )}
             </div>
         </div>
     );
