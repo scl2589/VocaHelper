@@ -47,12 +47,11 @@ export default function MobileMenu() {
       )}
 
       {/* 모바일 메뉴 */}
-      <div className={`fixed top-0 right-0 z-50 w-80 h-full bg-white dark:bg-gray-900 shadow-2xl transform transition-transform duration-300 ease-in-out md:hidden ${
-        isOpen ? 'translate-x-0' : 'translate-x-full'
-      }`}>
-        <div className="flex flex-col h-full bg-white dark:bg-gray-900">
+      {isOpen && (
+        <div className="fixed top-0 right-0 z-50 w-80 h-full shadow-2xl transform transition-transform duration-300 ease-in-out md:hidden translate-x-0" style={{ backgroundColor: 'white' }}>
+        <div className="flex flex-col h-full" style={{ backgroundColor: 'white' }}>
           {/* 메뉴 헤더 */}
-          <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+          <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700" style={{ backgroundColor: 'white' }}>
             <h2 className="text-lg font-semibold text-gray-900 dark:text-white">메뉴</h2>
             <button 
               onClick={closeMenu}
@@ -66,7 +65,7 @@ export default function MobileMenu() {
           </div>
 
           {/* 메뉴 항목들 */}
-          <nav className="flex-1 p-6">
+          <nav className="flex-1 p-6" style={{ backgroundColor: 'white' }}>
             <div className="space-y-4">
               <Link 
                 href="/vocabulary/add" 
@@ -128,7 +127,7 @@ export default function MobileMenu() {
           </nav>
 
           {/* 메뉴 푸터 */}
-          <div className="p-6 border-t border-gray-200 dark:border-gray-700">
+          <div className="p-6 border-t border-gray-200 dark:border-gray-700" style={{ backgroundColor: 'white' }}>
             <div className="text-center">
               <p className="text-sm text-gray-500 dark:text-gray-400">
                 Voca Helper로 효율적인 단어 학습을 시작하세요
@@ -136,7 +135,8 @@ export default function MobileMenu() {
             </div>
           </div>
         </div>
-      </div>
+        </div>
+      )}
     </>
   );
 }
