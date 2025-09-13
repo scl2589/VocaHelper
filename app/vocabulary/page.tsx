@@ -5,7 +5,6 @@ import AddButton from "@/components/addButton";
 import Title from "@/components/Title";
 import BookChapterSelector from "@/components/BookChapterSelector";
 import WordListCard from "@/components/WordListCard";
-import { Definition } from "@/types/vocabulary";
 import { useBookChapterFilter } from "@/hooks/useBookChapterFilter";
 import Link from "next/link";
 import { Suspense, useState, useEffect } from "react";
