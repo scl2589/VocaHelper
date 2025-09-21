@@ -69,6 +69,19 @@ function VocabularyContent() {
         return () => window.removeEventListener('scroll', handleScroll);
     }, []);
 
+    // 스페이스바 키 이벤트 리스너
+    useEffect(() => {
+        const handleKeyDown = (event: KeyboardEvent) => {
+            if (event.code === 'Space') {
+                event.preventDefault(); // 스크롤 방지
+                toggleHideAllDefinitions();
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [hideAllDefinitions]);
+
     // 셔플된 단어 목록 생성 (메모이제이션으로 안정적인 셔플)
     const displayVocabularies = useMemo(() => {
         if (!isShuffled) return filteredVocabularies;
