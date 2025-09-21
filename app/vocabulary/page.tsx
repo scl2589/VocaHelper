@@ -1,13 +1,11 @@
 'use client';
 
-import { deleteVocabulary } from "@/actions/vocabulary";
 import AddButton from "@/components/addButton";
 import Title from "@/components/Title";
 import BookChapterSelector from "@/components/BookChapterSelector";
-import WordListCard from "@/components/WordListCard";
 import { useBookChapterFilter } from "@/hooks/useBookChapterFilter";
 import Link from "next/link";
-import { Suspense, useState, useEffect } from "react";
+import { Suspense, useState, useEffect, useMemo } from "react";
 
 function VocabularyContent() {
     const {
@@ -22,23 +20,43 @@ function VocabularyContent() {
         clearAllChapters,
     } = useBookChapterFilter();
 
-    const [showDefinitions, setShowDefinitions] = useState(false);
-    const [isShuffled, setIsShuffled] = useState(false);
     const [showScrollTop, setShowScrollTop] = useState(false);
-
-    const toggleDefinitions = () => {
-        setShowDefinitions(!showDefinitions);
-    };
-
-    const shuffleWords = () => {
-        setIsShuffled(!isShuffled);
-    };
+    const [hideAllDefinitions, setHideAllDefinitions] = useState(false);
+    const [clickedWords, setClickedWords] = useState<Set<string>>(new Set());
+    const [isShuffled, setIsShuffled] = useState(false);
 
     const scrollToTop = () => {
         window.scrollTo({
             top: 0,
             behavior: 'smooth'
         });
+    };
+
+    const toggleHideAllDefinitions = () => {
+        setHideAllDefinitions(!hideAllDefinitions);
+        if (!hideAllDefinitions) {
+            // 숨기기 모드로 전환할 때 클릭된 단어들 초기화
+            setClickedWords(new Set());
+        }
+    };
+
+    const toggleWordDefinition = (wordId: string) => {
+        if (!hideAllDefinitions) return;
+        
+        setClickedWords(prev => {
+            const newSet = new Set(prev);
+            if (newSet.has(wordId)) {
+                newSet.delete(wordId);
+            } else {
+                newSet.add(wordId);
+            }
+            return newSet;
+        });
+    };
+
+    const shuffleWords = () => {
+        setIsShuffled(!isShuffled);
+        // 셔플할 때는 클릭된 단어들의 상태를 유지 (초기화하지 않음)
     };
 
     // 스크롤 이벤트 리스너
@@ -51,20 +69,18 @@ function VocabularyContent() {
         return () => window.removeEventListener('scroll', handleScroll);
     }, []);
 
-    // 셔플된 단어 목록 생성
-    const displayVocabularies = isShuffled 
-        ? [...filteredVocabularies].sort(() => Math.random() - 0.5)
-        : filteredVocabularies;
-
-    const handleDelete = async (id: string) => {
-        const confirmed = window.confirm("정말 삭제하시겠습니까?");
-        if (confirmed) {
-            const formData = new FormData();
-            formData.append("id", id);
-            await deleteVocabulary(formData);
-            window.location.reload();
+    // 셔플된 단어 목록 생성 (메모이제이션으로 안정적인 셔플)
+    const displayVocabularies = useMemo(() => {
+        if (!isShuffled) return filteredVocabularies;
+        
+        // 셔플할 때는 안정적인 셔플을 위해 현재 시간을 시드로 사용
+        const shuffled = [...filteredVocabularies];
+        for (let i = shuffled.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
         }
-    };
+        return shuffled;
+    }, [filteredVocabularies, isShuffled]);
 
     const getFilterDescription = () => {
         if (selectedChapters.length > 0) {
@@ -84,7 +100,7 @@ function VocabularyContent() {
             <div className="max-w-6xl mx-auto">
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
                     <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
-                        <Title title="단어 목록"/>
+                        <Title title="단어 외우기"/>
                         {book && (
                             <div className="flex items-center gap-2 px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full text-sm font-medium w-fit">
                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -125,7 +141,7 @@ function VocabularyContent() {
                     <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                         <div>
                             <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                                단어 목록
+                                단어 외우기
                             </h3>
                             <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
                                 {getFilterDescription()}
@@ -148,6 +164,19 @@ function VocabularyContent() {
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                                     </svg>
                                     {isShuffled ? '섞기 해제' : '단어 섞기'}
+                                </button>
+                                <button
+                                    onClick={toggleHideAllDefinitions}
+                                    className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-200 ${
+                                        hideAllDefinitions
+                                            ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300'
+                                            : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                                    }`}
+                                >
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21" />
+                                    </svg>
+                                    {hideAllDefinitions ? '의미 보이기' : '의미 숨기기'}
                                 </button>
                             </div>
                         </div>
@@ -181,16 +210,120 @@ function VocabularyContent() {
                         </div>
                     </div>
                 ) : (
-                    <div className="space-y-3 md:space-y-4">
-                        {displayVocabularies.map((vocab) => (
-                            <WordListCard
-                                key={vocab.id}
-                                vocab={vocab}
-                                onDelete={handleDelete}
-                                showDefinitions={showDefinitions}
-                                onToggleDefinitions={toggleDefinitions}
-                            />
-                        ))}
+                    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+                        <div className="overflow-x-auto">
+                            <table className="w-full">
+                                <thead className="bg-gray-50 dark:bg-gray-700">
+                                    <tr>
+                                        <th className="w-32 px-4 py-3 text-left text-sm font-semibold text-gray-900 dark:text-white border-r border-gray-200 dark:border-gray-600">
+                                            단어
+                                        </th>
+                                        <th className="w-80 px-4 py-3 text-left text-sm font-semibold text-gray-900 dark:text-white border-r-2 border-gray-400 dark:border-gray-500">
+                                            의미
+                                        </th>
+                                        <th className="w-32 px-4 py-3 text-left text-sm font-semibold text-gray-900 dark:text-white border-r border-gray-200 dark:border-gray-600">
+                                            단어
+                                        </th>
+                                        <th className="w-80 px-4 py-3 text-left text-sm font-semibold text-gray-900 dark:text-white">
+                                            의미
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                                    {Array.from({ length: Math.ceil(displayVocabularies.length / 2) }, (_, rowIndex) => {
+                                        const leftVocab = displayVocabularies[rowIndex * 2];
+                                        const rightVocab = displayVocabularies[rowIndex * 2 + 1];
+                                        
+                                        return (
+                                            <tr key={rowIndex}>
+                                                {/* 왼쪽 단어 */}
+                                                <td className="w-32 px-4 py-3 border-r border-gray-200 dark:border-gray-700">
+                                                    {leftVocab && (
+                                                        <div 
+                                                            className={`text-lg font-semibold text-gray-900 dark:text-white ${
+                                                                hideAllDefinitions ? 'cursor-pointer hover:text-blue-600 dark:hover:text-blue-400' : ''
+                                                            }`}
+                                                            onClick={() => toggleWordDefinition(leftVocab.id)}
+                                                        >
+                                                            {leftVocab.word}
+                                                        </div>
+                                                    )}
+                                                </td>
+                                                {/* 왼쪽 의미 */}
+                                                <td 
+                                                    className={`w-80 px-4 py-3 border-r-2 border-gray-400 dark:border-gray-500 ${
+                                                        hideAllDefinitions ? 'cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/30' : ''
+                                                    }`}
+                                                    onClick={() => toggleWordDefinition(leftVocab?.id || '')}
+                                                >
+                                                    {leftVocab && (
+                                                        <div className="space-y-1">
+                                                            {!hideAllDefinitions || clickedWords.has(leftVocab.id) ? (
+                                                                leftVocab.definitions.map(({ definition, partOfSpeech }, index) => (
+                                                                    <div key={index} className="text-gray-700 dark:text-gray-300 text-sm">
+                                                                        {partOfSpeech && (
+                                                                            <span className="inline-block bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 px-2 py-1 rounded text-xs font-medium mr-2">
+                                                                                {partOfSpeech}
+                                                                            </span>
+                                                                        )}
+                                                                        {definition}
+                                                                    </div>
+                                                                ))
+                                                            ) : (
+                                                                <div className="text-gray-400 dark:text-gray-500 text-sm italic">
+                                                                    클릭하여 의미 보기
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    )}
+                                                </td>
+                                                {/* 오른쪽 단어 */}
+                                                <td className="w-32 px-4 py-3 border-r border-gray-200 dark:border-gray-700">
+                                                    {rightVocab && (
+                                                        <div 
+                                                            className={`text-lg font-semibold text-gray-900 dark:text-white ${
+                                                                hideAllDefinitions ? 'cursor-pointer hover:text-blue-600 dark:hover:text-blue-400' : ''
+                                                            }`}
+                                                            onClick={() => toggleWordDefinition(rightVocab.id)}
+                                                        >
+                                                            {rightVocab.word}
+                                                        </div>
+                                                    )}
+                                                </td>
+                                                {/* 오른쪽 의미 */}
+                                                <td 
+                                                    className={`w-80 px-4 py-3 ${
+                                                        hideAllDefinitions ? 'cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/30' : ''
+                                                    }`}
+                                                    onClick={() => toggleWordDefinition(rightVocab?.id || '')}
+                                                >
+                                                    {rightVocab && (
+                                                        <div className="space-y-1">
+                                                            {!hideAllDefinitions || clickedWords.has(rightVocab.id) ? (
+                                                                rightVocab.definitions.map(({ definition, partOfSpeech }, index) => (
+                                                                    <div key={index} className="text-gray-700 dark:text-gray-300 text-sm">
+                                                                        {partOfSpeech && (
+                                                                            <span className="inline-block bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 px-2 py-1 rounded text-xs font-medium mr-2">
+                                                                                {partOfSpeech}
+                                                                            </span>
+                                                                        )}
+                                                                        {definition}
+                                                                    </div>
+                                                                ))
+                                                            ) : (
+                                                                <div className="text-gray-400 dark:text-gray-500 text-sm italic">
+                                                                    클릭하여 의미 보기
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    )}
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 )}
             </div>

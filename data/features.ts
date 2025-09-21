@@ -18,7 +18,7 @@ export const FEATURES = [
   {
     href: '/vocabulary',
     iconType: 'list',
-    title: '단어 리스트',
+    title: '단어 외우기',
     description: '저장된 모든 단어를 체계적으로 관리하고 검색',
     color: FEATURE_COLORS.purple
   },

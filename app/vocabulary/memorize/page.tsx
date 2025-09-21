@@ -76,7 +76,7 @@ export default function MemorizePage() {
     <div className="@container min-h-screen bg-gradient-to-b from-slate-50 to-slate-100 dark:from-gray-900 dark:to-gray-800 px-4 py-6 md:px-8 md:py-10">
       <div className="max-w-4xl mx-auto">
         <div className="flex items-center justify-between w-full mb-6">
-          <Title title="단어 외우기" />
+          <Title title="깜빡이 학습" />
           <AddButton path="/vocabulary/add" />
         </div>
 

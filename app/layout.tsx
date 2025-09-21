@@ -28,14 +28,14 @@ export default function RootLayout({
                 <Link href="/vocabulary/add" className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200 font-medium">
                   단어 추가
                 </Link>
-                <Link href="/vocabulary" className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200 font-medium">
-                  단어 리스트
-                </Link>
                 <Link href="/vocabulary/books" className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200 font-medium">
                   단어책
                 </Link>
+                <Link href="/vocabulary" className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200 font-medium">
+                  단어 외우기
+                </Link>
                 <Link href="/vocabulary/memorize" className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition-colors duration-200 shadow-sm hover:shadow-md">
-                  학습 시작
+                  깜빡이 학습
                 </Link>
               </nav>
               
