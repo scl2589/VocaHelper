@@ -127,7 +127,7 @@ interface VocabularyRow {
 }
 
 
-export async function createVocabularyFromFile(formData: FormData): Promise<void> {
+async function importSingleSheet(formData: FormData): Promise<void> {
     const book = formData.get("book") as string;
     const chapter = formData.get("chapter") as string;
     const file = formData.get("file") as File;
@@ -216,7 +216,7 @@ export async function createVocabularyFromFile(formData: FormData): Promise<void
     revalidatePath("/");
 }
 
-export async function createVocabularyFromMultipleFileSheets(formData: FormData): Promise<void> {
+async function importMultipleSheets(formData: FormData): Promise<void> {
     const book = formData.get("book") as string;
     const file = formData.get("file") as File;
 
@@ -320,4 +320,35 @@ export async function getVocabulariesByBook(bookName: string): Promise<Vocabular
     }
 
     return data || [];
+}
+// Return expected errors explicitly so production Server Actions do not hide them.
+async function importVocabularyFile(formData: FormData, multiple: boolean) {
+    try {
+        const file = formData.get("file");
+        if (!(file instanceof File) || file.size === 0) {
+            return { success: false, error: "엑셀 파일을 선택해주세요." };
+        }
+        if (!String(formData.get("book") || "").trim()) {
+            return { success: false, error: "단어장을 선택해주세요." };
+        }
+        if (!multiple && !String(formData.get("chapter") || "").trim()) {
+            return { success: false, error: "챕터명을 입력해주세요. 여러 시트가 있는 파일은 ‘복수의 시트’를 선택해주세요." };
+        }
+        if (multiple) await importMultipleSheets(formData);
+        else await importSingleSheet(formData);
+        return { success: true, error: null };
+    } catch (error) {
+        return {
+            success: false,
+            error: error instanceof Error ? error.message : "단어 추가 중 오류가 발생했습니다.",
+        };
+    }
+}
+
+export async function createVocabularyFromFile(formData: FormData) {
+    return importVocabularyFile(formData, false);
+}
+
+export async function createVocabularyFromMultipleFileSheets(formData: FormData) {
+    return importVocabularyFile(formData, true);
 }

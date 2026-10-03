@@ -18,6 +18,8 @@ export default function AddExcelPage() {
     const [isMultipleSheets, setIsMultipleSheets] = useState<boolean>(false);
     const [loading, setLoading] = useState<boolean>(false);
 
+    const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
     useEffect(() => {
         (async () => {
             const data = await getVocabularyBooks();
@@ -26,16 +28,20 @@ export default function AddExcelPage() {
     }, []);
 
     const handleFileSubmit = async (formData: FormData) => {
+        setErrorMessage(null);
         setLoading(true);
         try {
-            if (isMultipleSheets) {
-                await createVocabularyFromMultipleFileSheets(formData);
-            } else {
-                await createVocabularyFromFile(formData);
+            const result = isMultipleSheets
+                ? await createVocabularyFromMultipleFileSheets(formData)
+                : await createVocabularyFromFile(formData);
+            if (!result.success) {
+                setErrorMessage(result.error || "단어 추가 중 오류가 발생했습니다.");
+                return;
             }
             router.push("/"); // ✅ 추가 완료 후 홈으로 이동
         } catch (error) {
             console.error("Error uploading file:", error);
+            setErrorMessage("업로드 요청에 실패했습니다. 네트워크 연결을 확인하고 다시 시도해주세요.");
         } finally {
             setLoading(false);
         }
@@ -84,7 +90,8 @@ export default function AddExcelPage() {
                                 </label>
                                 <input 
                                     type="text" 
-                                    name="chapter" 
+                                    name="chapter"
+                                    required 
                                     className="w-full bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400"
                                     placeholder="예: 1장 채용, Chapter 1"
                                 />
@@ -95,6 +102,16 @@ export default function AddExcelPage() {
 
                         <ExcelFormatGuide />
 
+                        {errorMessage && (
+                            <p role="alert" className="rounded-lg bg-red-50 p-4 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-300">
+                                {errorMessage}
+                            </p>
+                        )}
+                        {loading && (
+                            <p role="status" className="text-sm text-blue-600 dark:text-blue-400">
+                                단어를 저장하고 있습니다. 시트가 많으면 시간이 걸릴 수 있습니다.
+                            </p>
+                        )}
                         <SubmitButton loading={loading}>
                             단어 추가하기
                         </SubmitButton>
