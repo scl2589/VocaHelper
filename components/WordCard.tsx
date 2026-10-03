@@ -16,37 +16,34 @@ export default function WordCard({ word, showDefinition, onToggleMemorized }: Wo
 
   return (
     <div
-      className={`relative flex flex-col items-center justify-center p-8 h-72 text-2xl transition-all duration-300 ${
+      className={`relative grid grid-rows-[96px_minmax(0,1fr)] gap-4 px-5 pb-6 pt-16 h-96 text-2xl transition-colors duration-300 ${
         showDefinition ? 'bg-slate-900 text-white' : 'bg-slate-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200'
       }`}
       style={{ cursor: 'pointer' }}>
-      <div className="w-full flex flex-col items-center justify-center">
-        <div className="mb-3">
-          <span
-            className={`font-bold text-3xl ${showDefinition ? 'text-gray-100' : 'text-slate-700 dark:text-slate-400'}`}>
-            {word.word}
-          </span>
-        </div>
+      {/* The word and meaning occupy independent fixed slots for every card. */}
+      <div className="min-h-0 overflow-auto text-center" data-word-anchor>
+        <span
+          className={`block font-bold text-3xl leading-10 break-words ${showDefinition ? 'text-gray-100' : 'text-slate-700 dark:text-slate-400'}`}>
+          {word.word}
+        </span>
+      </div>
 
-        <div className="w-full flex flex-col items-center justify-center">
-          {showDefinition ? (
-            <div className="flex flex-col items-center w-full max-w-md">
-              {word.definitions.map((def: Definition, index) => (
-                <div
-                  key={def.definition || index}
-                  className="flex flex-row items-center justify-center text-lg mb-2 text-center">
-                  {def?.partOfSpeech && (
-                    <span className="inline-block bg-slate-700 text-slate-100 px-2 py-0.5 rounded text-xs mr-2">
-                      {def.partOfSpeech}
-                    </span>
-                  )}
-                  <div>{def.definition}</div>
-                </div>
-              ))}
+      <div
+        key={word.id}
+        aria-hidden={!showDefinition}
+        className={`min-h-0 overflow-y-auto overscroll-contain w-full text-center ${showDefinition ? 'visible' : 'invisible'}`}
+        data-definition-slot>
+        <div className="flex flex-col items-center gap-2 w-full max-w-md mx-auto">
+          {word.definitions.map((def: Definition, index) => (
+            <div key={index} className="flex flex-row items-baseline justify-center text-lg leading-7 text-center">
+              {def.partOfSpeech && (
+                <span className="shrink-0 inline-block bg-slate-700 text-slate-100 px-2 py-0.5 rounded text-xs mr-2">
+                  {def.partOfSpeech}
+                </span>
+              )}
+              <div className="break-words min-w-0">{def.definition}</div>
             </div>
-          ) : (
-            <div className="h-[36px] text-lg text-gray-500 dark:text-gray-400" />
-          )}
+          ))}
         </div>
       </div>
 
