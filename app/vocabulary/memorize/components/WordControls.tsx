@@ -8,8 +8,8 @@ interface WordControlsProps {
   isPronounced: boolean;
   showOnlyUnmemorized: boolean;
   isShuffled: boolean;
-  secondsPerWord: number;
-  onDurationChange: (seconds: number) => void;
+  repetitionsPerWord: number;
+  onRepetitionChange: (seconds: number) => void;
   onShuffle: () => void;
   onPlay: () => void;
   onPronounce: () => void;
@@ -25,8 +25,8 @@ export default function WordControls({
   isPronounced,
   showOnlyUnmemorized,
   isShuffled,
-  secondsPerWord,
-  onDurationChange,
+  repetitionsPerWord,
+  onRepetitionChange,
   onShuffle,
   onPlay,
   onPronounce,
@@ -97,12 +97,12 @@ export default function WordControls({
       </div>
 
       <div className="mb-4 flex flex-wrap items-center gap-3 text-sm text-gray-700 dark:text-gray-300">
-        <label htmlFor="seconds-per-word">단어당 학습 시간</label>
-        <select id="seconds-per-word" value={secondsPerWord} onChange={event => onDurationChange(Number(event.target.value))}
+        <label htmlFor="repetitions-per-word">단어당 반복 횟수</label>
+        <select id="repetitions-per-word" value={repetitionsPerWord} onChange={event => onRepetitionChange(Number(event.target.value))}
           className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 dark:border-gray-600 dark:bg-gray-800 dark:text-white">
-          {[3, 5, 7, 10, 15, 20].map(seconds => <option key={seconds} value={seconds}>{seconds}초</option>)}
+          {[1, 3, 5, 10, 15, 20].map(count => <option key={count} value={count}>{count}회</option>)}
         </select>
-        <span className="text-xs text-gray-500 dark:text-gray-400">{isPlaying ? '변경한 시간은 다음 단어부터 적용돼요.' : '선택한 시간이 지나면 다음 단어로 넘어가요.'}</span>
+        <span className="text-xs text-gray-500 dark:text-gray-400">{isPlaying ? '변경한 횟수는 다음 단어부터 적용돼요.' : '뜻이 나타났다 사라지면 1회예요. 발음이 끝난 뒤 다음 단어로 넘어가요.'}</span>
       </div>
 
       {showOnlyUnmemorized && filteredCount !== undefined && totalCount !== undefined && (

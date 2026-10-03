@@ -14,8 +14,8 @@ interface MemorizeContentProps {
   isShuffled: boolean;
   showDefinition: boolean;
   currentWord: Vocabulary | null;
-  secondsPerWord: number;
-  onDurationChange: (seconds: number) => void;
+  repetitionsPerWord: number;
+  onRepetitionChange: (seconds: number) => void;
   onShuffle: () => void;
   onPlay: () => void;
   onPronounce: () => void;
@@ -37,8 +37,8 @@ export default function MemorizeContent({
   isShuffled,
   showDefinition,
   currentWord,
-  secondsPerWord,
-  onDurationChange,
+  repetitionsPerWord,
+  onRepetitionChange,
   onShuffle,
   onPlay,
   onPronounce,
@@ -122,8 +122,8 @@ export default function MemorizeContent({
         isPronounced={isPronounced}
         showOnlyUnmemorized={showOnlyUnmemorized}
         isShuffled={isShuffled}
-        secondsPerWord={secondsPerWord}
-        onDurationChange={onDurationChange}
+        repetitionsPerWord={repetitionsPerWord}
+        onRepetitionChange={onRepetitionChange}
         onShuffle={onShuffle}
         onPlay={onPlay}
         onPronounce={onPronounce}

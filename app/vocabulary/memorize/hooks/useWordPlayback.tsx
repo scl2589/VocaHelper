@@ -8,20 +8,20 @@ export function useWordPlayback(vocabularies: Vocabulary[], filteredVocabularies
   const [isPlaying, setIsPlaying] = useState(false);
   const [speechError, setSpeechError] = useState<string | null>(null);
   const pronouncedRef = useRef(true);
-  const [secondsPerWord, setSecondsPerWord] = useState(10);
-  const durationRef = useRef(10);
-  const handleDurationChange = useCallback((seconds: number) => {
-    if (![3, 5, 7, 10, 15, 20].includes(seconds)) return;
-    durationRef.current = seconds;
-    setSecondsPerWord(seconds);
-    try { localStorage.setItem('voca-seconds-per-word', String(seconds)); } catch { /* Storage may be unavailable. */ }
+  const [repetitionsPerWord, setRepetitionsPerWord] = useState(10);
+  const repetitionsRef = useRef(10);
+  const handleRepetitionChange = useCallback((seconds: number) => {
+    if (![1, 3, 5, 10, 15, 20].includes(seconds)) return;
+    repetitionsRef.current = seconds;
+    setRepetitionsPerWord(seconds);
+    try { localStorage.setItem('voca-repetitions-per-word', String(seconds)); } catch { /* Storage may be unavailable. */ }
   }, []);
   useEffect(() => {
     try {
-      const saved = Number(localStorage.getItem('voca-seconds-per-word'));
-      if ([3, 5, 7, 10, 15, 20].includes(saved)) {
-        durationRef.current = saved;
-        setSecondsPerWord(saved);
+      const saved = Number(localStorage.getItem('voca-repetitions-per-word'));
+      if ([1, 3, 5, 10, 15, 20].includes(saved)) {
+        repetitionsRef.current = saved;
+        setRepetitionsPerWord(saved);
       }
     } catch { /* Use the default when storage is unavailable. */ }
   }, []);
@@ -154,31 +154,34 @@ export function useWordPlayback(vocabularies: Vocabulary[], filteredVocabularies
     setShowDefinition(false);
 
     let count = 0;
-    let ticksPerWord = durationRef.current * 2;
+    let ticksPerWord = repetitionsRef.current * 2;
 
     intervalRef.current = setInterval(() => {
-      setShowDefinition((prev) => !prev);
-      count++;
-
-      if ([1, 5].includes(count)) {
-        const currentVocab = showOnlyUnmemorizedRef.current
-          ? filteredVocabulariesRef.current[orderRef.current]
-          : vocabulariesRef.current[orderRef.current];
-
-        if (currentVocab) {
-          speakWord(currentVocab.word);
-          currentVocab.definitions.forEach((def) => {
-            speakWord(def.definition, 'ko-KR');
-          });
-        }
+      const list = showOnlyUnmemorizedRef.current
+        ? filteredVocabulariesRef.current : vocabulariesRef.current;
+      if (!list.length) {
+        if (intervalRef.current) clearInterval(intervalRef.current);
+        intervalRef.current = null;
+        setIsPlaying(false);
+        return;
       }
-
+      // A full show/hide cycle is one repetition. Never cut queued speech short.
       if (count >= ticksPerWord) {
-        ticksPerWord = durationRef.current * 2;
-        if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+        if (pronouncedRef.current && 'speechSynthesis' in window
+          && (window.speechSynthesis.speaking || window.speechSynthesis.pending)) return;
+        ticksPerWord = repetitionsRef.current * 2;
         count = 0;
+        const next = (orderRef.current + 1) % list.length;
+        orderRef.current = next;
+        setOrder(next);
         setShowDefinition(false);
-        setOrder((current) => (current + 1) % currentVocabularies.length);
+        speakWord(list[next].word);
+        return;
+      }
+      count++;
+      setShowDefinition(count % 2 === 1);
+      if (count === 1) {
+        list[orderRef.current]?.definitions.forEach(def => speakWord(def.definition, 'ko-KR'));
       }
     }, 500);
   }, [isPlaying, currentVocabularies.length, currentWord, speakWord]);
@@ -208,8 +211,8 @@ export function useWordPlayback(vocabularies: Vocabulary[], filteredVocabularies
     setShowDefinition,
     isPronounced,
     speechError,
-    secondsPerWord,
-    handleDurationChange,
+    repetitionsPerWord,
+    handleRepetitionChange,
     isPlaying,
     showOnlyUnmemorized,
     currentVocabularies,
