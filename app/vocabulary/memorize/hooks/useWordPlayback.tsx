@@ -6,10 +6,13 @@ export function useWordPlayback(vocabularies: Vocabulary[], filteredVocabularies
   const [showDefinition, setShowDefinition] = useState(false);
   const [isPronounced, setIsPronounced] = useState(true);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [speechError, setSpeechError] = useState<string | null>(null);
+  const pronouncedRef = useRef(true);
   const [showOnlyUnmemorized, setShowOnlyUnmemorized] = useState(false);
 
   // Refs for interval and state values to avoid closure issues
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const revealTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const orderRef = useRef(order);
   const vocabulariesRef = useRef(vocabularies);
   const filteredVocabulariesRef = useRef(filteredVocabularies);
@@ -46,6 +49,8 @@ export function useWordPlayback(vocabularies: Vocabulary[], filteredVocabularies
   // Unmount시 인터벌 정리
   useEffect(() => {
     return () => {
+      if (revealTimeoutRef.current) clearTimeout(revealTimeoutRef.current);
+      if ('speechSynthesis' in window) window.speechSynthesis.cancel();
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
         intervalRef.current = null;
@@ -53,30 +58,49 @@ export function useWordPlayback(vocabularies: Vocabulary[], filteredVocabularies
     };
   }, []);
 
-  // 발음과 관련된 함수
-  const speakWord = useCallback(
-    (text: string, language = 'en-US') => {
-      if (!isPronounced) return;
-
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = language;
-      utterance.rate = language === 'en-US' ? 0.8 : 1.2;
-      window.speechSynthesis.speak(utterance);
-    },
-    [isPronounced]
-  );
-
-  // 발음 켜기/끄기
-  const handleClickSpeaker = useCallback(() => {
-    setIsPronounced((prev) => !prev);
-    if (!isPronounced && currentWord) {
-      speakWord(currentWord.word);
+  // Read the latest sound setting even inside an already-running timer.
+  const speakWord = useCallback((text: string, language = 'en-US') => {
+    if (!pronouncedRef.current) return;
+    if (!('speechSynthesis' in window) || !('SpeechSynthesisUtterance' in window)) {
+      setSpeechError('이 브라우저는 발음을 지원하지 않습니다. Safari에서 열어주세요.');
+      return;
     }
-  }, [isPronounced, currentWord, speakWord]);
+    const synth = window.speechSynthesis;
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = language;
+    utterance.rate = language === 'en-US' ? 0.8 : 1.2;
+    const voices = synth.getVoices();
+    const voice = voices.find(item => item.lang === language)
+      || voices.find(item => item.lang.startsWith(language.split('-')[0]));
+    if (voice) utterance.voice = voice;
+    utterance.onstart = () => setSpeechError(null);
+    utterance.onerror = event => {
+      if (event.error === 'interrupted' || event.error === 'canceled') return;
+      setSpeechError('발음을 재생하지 못했어요. 소리 버튼을 껐다 켜고, 아이폰 음량과 무음 모드를 확인해주세요.');
+    };
+    if (synth.paused) synth.resume();
+    synth.speak(utterance);
+  }, []);
+
+  const handleClickSpeaker = useCallback(() => {
+    const enabled = !pronouncedRef.current;
+    pronouncedRef.current = enabled;
+    setIsPronounced(enabled);
+    if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+    if (enabled && currentWord) speakWord(currentWord.word);
+    else setSpeechError(null);
+  }, [currentWord, speakWord]);
 
   // 단어 넘기기 (다음 단어/ 이전 단어)
   const handleNavigation = useCallback(
     (direction: 'next' | 'prev') => {
+      if (!currentVocabularies.length) return;
+      const changesWord = direction === 'next' ? showDefinition : !showDefinition;
+      if (changesWord) {
+        const nextOrder = (order + (direction === 'next' ? 1 : -1) + currentVocabularies.length) % currentVocabularies.length;
+        if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+        speakWord(currentVocabularies[nextOrder].word);
+      }
       if (direction === 'next') {
         if (showDefinition) {
           setShowDefinition(false);
@@ -94,7 +118,7 @@ export function useWordPlayback(vocabularies: Vocabulary[], filteredVocabularies
         }
       }
     },
-    [showDefinition, currentVocabularies.length]
+    [showDefinition, currentVocabularies, order, speakWord]
   );
 
   // 재생/정지에 대한 함수
@@ -102,16 +126,22 @@ export function useWordPlayback(vocabularies: Vocabulary[], filteredVocabularies
     if (isPlaying && intervalRef.current) {
       clearInterval(intervalRef.current);
       intervalRef.current = null;
+      if (revealTimeoutRef.current) clearTimeout(revealTimeoutRef.current);
+      if ('speechSynthesis' in window) window.speechSynthesis.cancel();
       setIsPlaying(false);
       return;
     }
 
+    if (!currentWord) return;
+    // iOS needs the first utterance synchronously inside the button gesture.
+    if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+    speakWord(currentWord.word);
     setIsPlaying(true);
     setShowDefinition(false);
 
     let count = 0;
 
-    setTimeout(() => {
+    revealTimeoutRef.current = setTimeout(() => {
       setShowDefinition(true);
       count++;
     }, 500);
@@ -139,7 +169,7 @@ export function useWordPlayback(vocabularies: Vocabulary[], filteredVocabularies
         setOrder((current) => (current + 1) % currentVocabularies.length);
       }
     }, 500);
-  }, [isPlaying, currentVocabularies.length, speakWord]);
+  }, [isPlaying, currentVocabularies.length, currentWord, speakWord]);
 
   const toggleFilter = useCallback(() => {
     if (isPlaying && intervalRef.current) {
@@ -165,6 +195,7 @@ export function useWordPlayback(vocabularies: Vocabulary[], filteredVocabularies
     showDefinition,
     setShowDefinition,
     isPronounced,
+    speechError,
     isPlaying,
     showOnlyUnmemorized,
     currentVocabularies,

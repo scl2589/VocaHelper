@@ -40,7 +40,7 @@ export default function MemorizePage() {
     isPronounced,
     isPlaying,
     currentWord,
-    speakWord,
+    speechError,
     handleClickSpeaker,
     handleNavigation,
     handleClickPlay,
@@ -65,13 +65,6 @@ export default function MemorizePage() {
     resetPosition();
   }, [showOnlyUnmemorized, resetPosition]);
 
-  // Speak word when navigation changes
-  useEffect(() => {
-    if (currentWord && isPronounced && !isPlaying) {
-      speakWord(currentWord.word);
-    }
-  }, [currentWord, isPronounced, speakWord, isPlaying]);
-
   return (
     <div className="@container min-h-screen bg-gradient-to-b from-slate-50 to-slate-100 dark:from-gray-900 dark:to-gray-800 px-4 py-6 md:px-8 md:py-10">
       <div className="max-w-4xl mx-auto">
@@ -89,6 +82,7 @@ export default function MemorizePage() {
           handleChapterToggle={handleChapterToggle}
         />
 
+        {speechError && <p role="alert" className="mt-4 rounded-lg bg-amber-50 p-3 text-sm text-amber-900">{speechError}</p>}
         <div className="mt-8">
           <MemorizeContent
             currentVocabularies={currentVocabularies}
