@@ -8,11 +8,27 @@ export function useWordPlayback(vocabularies: Vocabulary[], filteredVocabularies
   const [isPlaying, setIsPlaying] = useState(false);
   const [speechError, setSpeechError] = useState<string | null>(null);
   const pronouncedRef = useRef(true);
+  const [secondsPerWord, setSecondsPerWord] = useState(10);
+  const durationRef = useRef(10);
+  const handleDurationChange = useCallback((seconds: number) => {
+    if (![3, 5, 7, 10, 15, 20].includes(seconds)) return;
+    durationRef.current = seconds;
+    setSecondsPerWord(seconds);
+    try { localStorage.setItem('voca-seconds-per-word', String(seconds)); } catch { /* Storage may be unavailable. */ }
+  }, []);
+  useEffect(() => {
+    try {
+      const saved = Number(localStorage.getItem('voca-seconds-per-word'));
+      if ([3, 5, 7, 10, 15, 20].includes(saved)) {
+        durationRef.current = saved;
+        setSecondsPerWord(saved);
+      }
+    } catch { /* Use the default when storage is unavailable. */ }
+  }, []);
   const [showOnlyUnmemorized, setShowOnlyUnmemorized] = useState(false);
 
   // Refs for interval and state values to avoid closure issues
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
-  const revealTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const orderRef = useRef(order);
   const vocabulariesRef = useRef(vocabularies);
   const filteredVocabulariesRef = useRef(filteredVocabularies);
@@ -49,7 +65,6 @@ export function useWordPlayback(vocabularies: Vocabulary[], filteredVocabularies
   // Unmount시 인터벌 정리
   useEffect(() => {
     return () => {
-      if (revealTimeoutRef.current) clearTimeout(revealTimeoutRef.current);
       if ('speechSynthesis' in window) window.speechSynthesis.cancel();
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
@@ -126,7 +141,6 @@ export function useWordPlayback(vocabularies: Vocabulary[], filteredVocabularies
     if (isPlaying && intervalRef.current) {
       clearInterval(intervalRef.current);
       intervalRef.current = null;
-      if (revealTimeoutRef.current) clearTimeout(revealTimeoutRef.current);
       if ('speechSynthesis' in window) window.speechSynthesis.cancel();
       setIsPlaying(false);
       return;
@@ -140,11 +154,7 @@ export function useWordPlayback(vocabularies: Vocabulary[], filteredVocabularies
     setShowDefinition(false);
 
     let count = 0;
-
-    revealTimeoutRef.current = setTimeout(() => {
-      setShowDefinition(true);
-      count++;
-    }, 500);
+    let ticksPerWord = durationRef.current * 2;
 
     intervalRef.current = setInterval(() => {
       setShowDefinition((prev) => !prev);
@@ -163,7 +173,9 @@ export function useWordPlayback(vocabularies: Vocabulary[], filteredVocabularies
         }
       }
 
-      if (count >= 20) {
+      if (count >= ticksPerWord) {
+        ticksPerWord = durationRef.current * 2;
+        if ('speechSynthesis' in window) window.speechSynthesis.cancel();
         count = 0;
         setShowDefinition(false);
         setOrder((current) => (current + 1) % currentVocabularies.length);
@@ -196,6 +208,8 @@ export function useWordPlayback(vocabularies: Vocabulary[], filteredVocabularies
     setShowDefinition,
     isPronounced,
     speechError,
+    secondsPerWord,
+    handleDurationChange,
     isPlaying,
     showOnlyUnmemorized,
     currentVocabularies,

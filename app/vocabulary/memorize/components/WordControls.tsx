@@ -8,6 +8,8 @@ interface WordControlsProps {
   isPronounced: boolean;
   showOnlyUnmemorized: boolean;
   isShuffled: boolean;
+  secondsPerWord: number;
+  onDurationChange: (seconds: number) => void;
   onShuffle: () => void;
   onPlay: () => void;
   onPronounce: () => void;
@@ -23,6 +25,8 @@ export default function WordControls({
   isPronounced,
   showOnlyUnmemorized,
   isShuffled,
+  secondsPerWord,
+  onDurationChange,
   onShuffle,
   onPlay,
   onPronounce,
@@ -90,6 +94,15 @@ export default function WordControls({
             <Icon type="soundOff" customClassName="w-5 h-5 text-gray-500 dark:text-gray-400" />
           )}
         </button>
+      </div>
+
+      <div className="mb-4 flex flex-wrap items-center gap-3 text-sm text-gray-700 dark:text-gray-300">
+        <label htmlFor="seconds-per-word">단어당 학습 시간</label>
+        <select id="seconds-per-word" value={secondsPerWord} onChange={event => onDurationChange(Number(event.target.value))}
+          className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 dark:border-gray-600 dark:bg-gray-800 dark:text-white">
+          {[3, 5, 7, 10, 15, 20].map(seconds => <option key={seconds} value={seconds}>{seconds}초</option>)}
+        </select>
+        <span className="text-xs text-gray-500 dark:text-gray-400">{isPlaying ? '변경한 시간은 다음 단어부터 적용돼요.' : '선택한 시간이 지나면 다음 단어로 넘어가요.'}</span>
       </div>
 
       {showOnlyUnmemorized && filteredCount !== undefined && totalCount !== undefined && (

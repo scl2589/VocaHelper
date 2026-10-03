@@ -41,6 +41,8 @@ export default function MemorizePage() {
     isPlaying,
     currentWord,
     speechError,
+    secondsPerWord,
+    handleDurationChange,
     handleClickSpeaker,
     handleNavigation,
     handleClickPlay,
@@ -95,6 +97,8 @@ export default function MemorizePage() {
             isShuffled={isShuffled}
             showDefinition={showDefinition}
             currentWord={currentWord}
+            secondsPerWord={secondsPerWord}
+            onDurationChange={handleDurationChange}
             onShuffle={shuffleVocabularies}
             onPlay={handleClickPlay}
             onPronounce={handleClickSpeaker}
