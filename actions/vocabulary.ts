@@ -227,76 +227,62 @@ async function importMultipleSheets(formData: FormData): Promise<void> {
     const arrayBuffer = await file.arrayBuffer();
     const workbook = XLSX.read(arrayBuffer, { type: "buffer" });
 
-    const allWords: CreateVocabulary[] = [];
-
-    for (const sheetName of workbook.SheetNames) {
-        const sheet = workbook.Sheets[sheetName];
-        const firstRowData = XLSX.utils.sheet_to_json<string[]>(sheet, { header: 1 })[0];
-
-        if (!firstRowData || !firstRowData.includes("단어")) {
-            throw new Error(`'단어' 열이 없는 시트(${sheetName})입니다.`);
+    // Validate every sheet before making any database changes.
+    const parsedSheets = workbook.SheetNames.map((name) => {
+        const sheet = workbook.Sheets[name];
+        const headers = XLSX.utils.sheet_to_json<string[]>(sheet, { header: 1 })[0];
+        if (!headers || !headers.includes("단어")) {
+            throw new Error(`'단어' 열이 없는 시트(${name})입니다.`);
         }
-
-        // "의미N", "품사N" 컬럼 동적 감지
-        const meaningKeys = firstRowData.filter((key) => key.startsWith("의미"));
-        const partOfSpeechKeys = firstRowData.filter((key) => key.startsWith("품사"));
-
-        const json: VocabularyRow[] = XLSX.utils.sheet_to_json(sheet);
-
-        // ✅ 해당 챕터가 존재하는지 확인
-        let chapter; // chapter는 변경될 가능성이 있으므로 let 유지
-        const { data: existingChapter, error: chapterError } = await supabase
-            .from("chapters")
-            .select("id")
-            .eq("book_name", book)
-            .eq("name", sheetName)
-            .single();
-
-        if (chapterError && chapterError.code === "PGRST116") {
-            // ✅ 존재하지 않는다면 새로운 챕터 생성
-            const { data: newChapter, error: newChapterError } = await supabase
-                .from("chapters")
-                .insert([{ book_name: book, name: sheetName }])
-                .select("id")
-                .single();
-
-            if (newChapterError) {
-                throw new Error(`챕터 추가 중 오류 발생: ${newChapterError.message}`);
-            }
-
-            chapter = newChapter;
-        } else if (chapterError) {
-            throw new Error(`챕터 조회 중 오류 발생: ${chapterError.message}`);
-        } else {
-            chapter = existingChapter;
+        const meaningKeys = headers.filter((key) => typeof key === "string" && key.startsWith("의미"));
+        const rows: VocabularyRow[] = XLSX.utils.sheet_to_json(sheet);
+        const words = rows.map((item) => ({
+            word: item["단어"],
+            definitions: meaningKeys.flatMap((key) => {
+                const partKey = key.replace(/^의미/, "품사");
+                return item[key] && item[partKey]
+                    ? [{ definition: item[key], partOfSpeech: item[partKey] }]
+                    : [];
+            }),
+        }));
+        if (!words.length || words.some((word) => !word.word || !word.definitions.length)) {
+            throw new Error(`시트(${name})의 단어와 의미/품사 값을 확인해주세요.`);
         }
+        return { name, words };
+    });
 
-        const words = json.map((item: VocabularyRow) => {
-            const definitions: Definition[] = [];
+    // Resolve all chapters in at most two requests instead of two per sheet.
+    const { data: existingChapters, error: chapterError } = await supabase
+        .from("chapters")
+        .select("id, name")
+        .eq("book_name", book)
+        .in("name", workbook.SheetNames);
+    if (chapterError) throw new Error(`챕터 조회 중 오류 발생: ${chapterError.message}`);
 
-            for (let i = 0; i < meaningKeys.length; i++) {
-                const meaningKey = meaningKeys[i];
-                const partOfSpeechKey = partOfSpeechKeys[i];
-
-                if (item[meaningKey] && item[partOfSpeechKey]) {
-                    definitions.push({
-                        partOfSpeech: item[partOfSpeechKey],
-                        definition: item[meaningKey],
-                    });
-                }
-            }
-
-            return {
-                word: item["단어"],
-                definitions,
-                book,
-                chapter_id: chapter?.id,
-                count: 0,
-            };
-        });
-
-        allWords.push(...words);
+    const chapterIds = new Map<string, string>();
+    for (const chapter of existingChapters || []) {
+        if (chapterIds.has(chapter.name)) {
+            throw new Error(`중복된 챕터(${chapter.name})가 있습니다. 챕터를 확인해주세요.`);
+        }
+        chapterIds.set(chapter.name, chapter.id);
     }
+    const missingChapters = parsedSheets
+        .filter(({ name }) => !chapterIds.has(name))
+        .map(({ name }) => ({ book_name: book, name }));
+    if (missingChapters.length) {
+        const { data: createdChapters, error } = await supabase
+            .from("chapters")
+            .insert(missingChapters)
+            .select("id, name");
+        if (error) throw new Error(`챕터 추가 중 오류 발생: ${error.message}`);
+        for (const chapter of createdChapters || []) chapterIds.set(chapter.name, chapter.id);
+    }
+
+    const allWords: CreateVocabulary[] = parsedSheets.flatMap(({ name, words }) => {
+        const chapterId = chapterIds.get(name);
+        if (!chapterId) throw new Error(`챕터(${name})를 찾을 수 없습니다.`);
+        return words.map((word) => ({ ...word, book, chapter_id: chapterId, count: 0 }));
+    });
 
     // ✅ 단어 데이터 삽입
     const { error } = await supabase.from("vocabularies").insert(allWords);
