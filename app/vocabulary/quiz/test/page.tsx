@@ -243,7 +243,7 @@ function QuizTestContent() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
           <p className="text-gray-600 dark:text-gray-400">퀴즈를 준비하고 있습니다...</p>
@@ -254,7 +254,7 @@ function QuizTestContent() {
 
   if (vocabularies.length === 0) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
           <p className="text-gray-600 dark:text-gray-400 mb-4">퀴즈를 풀 수 있는 단어가 없습니다.</p>
           <button
@@ -270,7 +270,7 @@ function QuizTestContent() {
 
   if (!quizStarted) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100 dark:from-gray-900 dark:to-gray-800 px-4 py-6 md:px-8 md:py-10">
+      <div className="min-h-screen bg-background px-4 py-6 md:px-8 md:py-10">
         <div className="max-w-2xl mx-auto">
           <FormCard
             title="퀴즈 시작"
@@ -311,7 +311,7 @@ function QuizTestContent() {
               
               <button
                 onClick={startQuiz}
-                className="px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors duration-200 shadow-lg hover:shadow-xl text-lg"
+                className="px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors duration-200 shadow-sm hover:shadow-sm text-lg"
               >
                 퀴즈 시작하기
               </button>
@@ -327,7 +327,7 @@ function QuizTestContent() {
     const averageTime = getAverageTime();
     
     return (
-      <div className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100 dark:from-gray-900 dark:to-gray-800 px-4 py-6 md:px-8 md:py-10">
+      <div className="min-h-screen bg-background px-4 py-6 md:px-8 md:py-10">
         <div className="max-w-4xl mx-auto">
           <FormCard
             title="퀴즈 결과"
@@ -420,7 +420,7 @@ function QuizTestContent() {
   // Safety check for currentQuestion
   if (!currentQuestion) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
           <p className="text-gray-600 dark:text-gray-400 mb-4">퀴즈 문제를 불러오는 중 오류가 발생했습니다.</p>
           <button
@@ -435,7 +435,7 @@ function QuizTestContent() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100 dark:from-gray-900 dark:to-gray-800 px-4 py-6 md:px-8 md:py-10">
+    <div className="min-h-screen bg-background px-4 py-6 md:px-8 md:py-10">
       <div className="max-w-2xl mx-auto">
         <FormCard
           title={`문제 ${currentQuestionIndex + 1} / ${questions.length}`}
@@ -537,7 +537,7 @@ function QuizTestContent() {
 
 function LoadingFallback() {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center">
+    <div className="min-h-screen bg-background flex items-center justify-center">
       <div className="text-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
         <p className="text-gray-600 dark:text-gray-400">퀴즈를 준비하는 중...</p>

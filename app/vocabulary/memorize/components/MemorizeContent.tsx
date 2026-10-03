@@ -132,7 +132,7 @@ export default function MemorizeContent({
         totalCount={vocabularies.length}
       />
 
-      <div className="rounded-2xl shadow-lg dark:shadow-gray-900/30 overflow-hidden mb-6 transition-all duration-300 hover:shadow-xl bg-white dark:bg-gray-700">
+      <div className="rounded-2xl shadow-sm dark:shadow-gray-900/30 overflow-hidden mb-6 transition-all duration-300 hover:shadow-sm bg-white dark:bg-gray-700">
         <div onClick={onToggleDefinition}>
           <WordCard
             word={currentWord}

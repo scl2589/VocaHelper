@@ -41,7 +41,7 @@ export default function AddPage() {
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100 dark:from-gray-900 dark:to-gray-800 px-4 py-6 md:px-8 md:py-10">
+        <div className="min-h-screen bg-background px-4 py-6 md:px-8 md:py-10">
             <div className="max-w-4xl mx-auto">
                 <PageHeader 
                     title="단어 추가"

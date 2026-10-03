@@ -17,13 +17,13 @@ export default function WordCard({ word, showDefinition, onToggleMemorized }: Wo
   return (
     <div
       className={`relative grid grid-rows-[96px_minmax(0,1fr)] gap-4 px-5 pb-6 pt-16 h-96 text-2xl transition-colors duration-300 ${
-        showDefinition ? 'bg-slate-900 text-white' : 'bg-slate-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200'
+        'bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200'
       }`}
       style={{ cursor: 'pointer' }}>
       {/* The word and meaning occupy independent fixed slots for every card. */}
       <div className="min-h-0 overflow-auto text-center" data-word-anchor>
         <span
-          className={`block font-bold text-3xl leading-10 break-words ${showDefinition ? 'text-gray-100' : 'text-slate-700 dark:text-slate-400'}`}>
+          className={`block font-bold text-3xl leading-10 break-words ${'text-slate-900 dark:text-slate-100'}`}>
           {word.word}
         </span>
       </div>
@@ -37,7 +37,7 @@ export default function WordCard({ word, showDefinition, onToggleMemorized }: Wo
           {word.definitions.map((def: Definition, index) => (
             <div key={index} className="flex flex-row items-baseline justify-center text-lg leading-7 text-center">
               {def.partOfSpeech && (
-                <span className="shrink-0 inline-block bg-slate-700 text-slate-100 px-2 py-0.5 rounded text-xs mr-2">
+                <span className="shrink-0 inline-block bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-100 px-2 py-0.5 rounded text-xs mr-2">
                   {def.partOfSpeech}
                 </span>
               )}

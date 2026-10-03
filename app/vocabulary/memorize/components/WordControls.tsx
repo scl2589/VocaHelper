@@ -36,8 +36,8 @@ export default function WordControls({
 }: WordControlsProps) {
   return (
     <>
-      <div className="flex justify-between items-center mb-4">
-        <div className="flex items-center">
+      <div className="flex flex-wrap gap-3 justify-between items-center mb-4">
+        <div className="flex flex-wrap gap-y-3 items-center">
           <div className="min-w-[40px] md-min-w-[80px] text-center bg-indigo-100 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-200 py-1 px-3 rounded-full font-medium text-sm">
             {order + 1} / {totalWords}
           </div>
@@ -86,6 +86,8 @@ export default function WordControls({
           </button>
         </div>
         <button
+          aria-label={isPronounced ? "발음 끄기" : "발음 켜기"}
+          aria-pressed={isPronounced}
           onClick={onPronounce}
           className="bg-white dark:bg-gray-700 p-2 rounded-full shadow-sm dark:shadow-gray-900/30 hover:shadow-md transition-shadow border border-gray-200 dark:border-gray-600">
           {isPronounced ? (

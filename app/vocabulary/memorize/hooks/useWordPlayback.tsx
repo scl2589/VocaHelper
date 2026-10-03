@@ -184,7 +184,7 @@ export function useWordPlayback(vocabularies: Vocabulary[], filteredVocabularies
         list[orderRef.current]?.definitions.forEach(def => speakWord(def.definition, 'ko-KR'));
       }
     }, 500);
-  }, [isPlaying, currentVocabularies.length, currentWord, speakWord]);
+  }, [isPlaying, currentWord, speakWord]);
 
   const toggleFilter = useCallback(() => {
     if (isPlaying && intervalRef.current) {

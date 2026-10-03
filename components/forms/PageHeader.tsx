@@ -9,7 +9,7 @@ interface PageHeaderProps {
 
 export default function PageHeader({ title, actionText, actionHref }: PageHeaderProps) {
     return (
-        <div className="flex items-center justify-between w-full mb-6">
+        <div className="flex flex-wrap items-center justify-between gap-4 w-full mb-8">
             <Title title={title} />
             <Link 
                 href={actionHref}
