@@ -148,8 +148,8 @@ function QuizContent() {
       <div className="max-w-4xl mx-auto">
         <PageHeader 
           title="단어 퀴즈"
-          actionText="단어 목록"
-          actionHref="/vocabulary"
+          actionText="오답노트"
+          actionHref="/vocabulary/wrong-answers"
         />
 
         <div className="space-y-6">

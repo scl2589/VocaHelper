@@ -1,12 +1,17 @@
 'use client';
 
-import { useState, useEffect, useCallback, Suspense } from "react";
+import { useState, useEffect, useCallback, useRef, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { getVocabulariesByChapters, getVocabulariesByBook } from "@/actions/vocabulary";
 import { Vocabulary } from '@/types/vocabulary';
 import FormCard from "@/components/forms/FormCard";
 
+import Link from 'next/link';
+import { saveWrongAnswer } from '@/lib/wrongAnswers';
+
 interface QuizQuestion {
+  vocabularyId: string;
+  book: string;
   question: string;
   correctAnswer: string;
   options?: string[]; // Only for multiple choice
@@ -34,6 +39,9 @@ function QuizTestContent() {
   const [quizCompleted, setQuizCompleted] = useState(false);
   const [loading, setLoading] = useState(true);
   const [textAnswer, setTextAnswer] = useState<string>('');
+
+  const answeredQuestionRef = useRef(-1);
+  const [storageError, setStorageError] = useState<string | null>(null);
 
   const book = searchParams.get('book') || '';
   const chapters = searchParams.get('chapters') || '';
@@ -100,6 +108,8 @@ function QuizTestContent() {
             const options = [correctDefinition, ...wrongOptions].sort(() => Math.random() - 0.5);
             
             return {
+              vocabularyId: vocab.id,
+              book: vocab.book || book,
               question: vocab.word,
               correctAnswer: correctDefinition,
               options,
@@ -108,6 +118,8 @@ function QuizTestContent() {
             };
           } else {
             return {
+              vocabularyId: vocab.id,
+              book: vocab.book || book,
               question: vocab.word,
               correctAnswer: correctDefinition,
               type: 'word-to-definition',
@@ -132,6 +144,8 @@ function QuizTestContent() {
             }
             
             return {
+              vocabularyId: vocab.id,
+              book: vocab.book || book,
               question: correctDefinition,
               correctAnswer: vocab.word,
               options: options.sort(() => Math.random() - 0.5),
@@ -140,6 +154,8 @@ function QuizTestContent() {
             };
           } else {
             return {
+              vocabularyId: vocab.id,
+              book: vocab.book || book,
               question: correctDefinition,
               correctAnswer: vocab.word,
               type: 'definition-to-word',
@@ -152,24 +168,26 @@ function QuizTestContent() {
 
     const quizQuestions = generateQuestions();
     setQuestions(quizQuestions);
-  }, [vocabularies, totalQuestions, questionType, answerType]);
+  }, [vocabularies, totalQuestions, questionType, answerType, book]);
 
   const handleAnswer = useCallback((answer: string) => {
     const currentQuestion = questions[currentQuestionIndex];
     
     // Safety check
-    if (!currentQuestion) {
+    if (!currentQuestion || answeredQuestionRef.current === currentQuestionIndex) {
       console.error('Current question is undefined');
       return;
     }
     
+    answeredQuestionRef.current = currentQuestionIndex;
+
     // Check if answer is correct based on answer type
     let isCorrect: boolean;
     if (currentQuestion.answerType === 'text-input') {
       // For text input, check if user answer is included in correct answer
       const userAnswerLower = answer.toLowerCase().trim();
       const correctAnswerLower = currentQuestion.correctAnswer.toLowerCase().trim();
-      isCorrect = correctAnswerLower.includes(userAnswerLower) || userAnswerLower.includes(correctAnswerLower);
+      isCorrect = userAnswerLower.length > 0 && (correctAnswerLower.includes(userAnswerLower) || userAnswerLower.includes(correctAnswerLower));
     } else {
       // For multiple choice, exact match
       isCorrect = answer === currentQuestion.correctAnswer;
@@ -184,6 +202,20 @@ function QuizTestContent() {
       timeSpent
     };
     
+    if (!isCorrect) {
+      try {
+        saveWrongAnswer({
+          vocabularyId: currentQuestion.vocabularyId,
+          book: currentQuestion.book,
+          question: currentQuestion.question,
+          correctAnswer: currentQuestion.correctAnswer,
+          userAnswer: answer,
+          type: currentQuestion.type,
+        });
+      } catch {
+        setStorageError('오답을 저장하지 못했어요. 브라우저 저장 공간과 설정을 확인해주세요. 저장하지 못한 문제는 이번 퀴즈 결과에서 확인할 수 있어요.');
+      }
+    }
     setUserAnswers(prev => [...prev, result]);
     
     if (currentQuestionIndex < questions.length - 1) {
@@ -200,18 +232,14 @@ function QuizTestContent() {
   useEffect(() => {
     if (!quizStarted || quizCompleted || timeLimit === 0) return;
 
-    const timer = setInterval(() => {
-      setTimeLeft(prev => {
-        if (prev <= 1) {
-          handleAnswer(''); // Time's up, mark as incorrect
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
+    if (timeLeft <= 0) {
+      handleAnswer('');
+      return;
+    }
+    const timer = setTimeout(() => setTimeLeft(prev => prev - 1), 1000);
+    return () => clearTimeout(timer);
+  }, [quizStarted, quizCompleted, timeLimit, timeLeft, handleAnswer]);
 
-    return () => clearInterval(timer);
-  }, [quizStarted, quizCompleted, timeLimit, handleAnswer]);
 
   const startQuiz = () => {
     setQuizStarted(true);
@@ -394,7 +422,9 @@ function QuizTestContent() {
                 </div>
               </div>
 
-              <div className="flex gap-4 justify-center">
+              {storageError && <p role="alert" className="text-sm text-red-600 dark:text-red-400">{storageError}</p>}
+              <div className="flex flex-wrap gap-4 justify-center">
+                <Link href="/vocabulary/wrong-answers" className="study-secondary">오답노트 보기</Link>
                 <button
                   onClick={() => router.push('/vocabulary/quiz')}
                   className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors duration-200"
@@ -437,6 +467,7 @@ function QuizTestContent() {
   return (
     <div className="min-h-screen bg-background px-4 py-6 md:px-8 md:py-10">
       <div className="max-w-2xl mx-auto">
+        {storageError && <p role="alert" className="mb-4 text-sm text-red-600 dark:text-red-400">{storageError}</p>}
         <FormCard
           title={`문제 ${currentQuestionIndex + 1} / ${questions.length}`}
           description={
