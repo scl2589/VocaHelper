@@ -168,7 +168,9 @@ function QuizTestContent() {
 
     const quizQuestions = generateQuestions();
     setQuestions(quizQuestions);
-  }, [vocabularies, totalQuestions, questionType, answerType, book]);
+    setTimeLeft(timeLimit);
+    setQuizStarted(true);
+  }, [vocabularies, totalQuestions, questionType, answerType, book, timeLimit]);
 
   const handleAnswer = useCallback((answer: string) => {
     const currentQuestion = questions[currentQuestionIndex];
@@ -241,12 +243,6 @@ function QuizTestContent() {
   }, [quizStarted, quizCompleted, timeLimit, timeLeft, handleAnswer]);
 
 
-  const startQuiz = () => {
-    setQuizStarted(true);
-    setTimeLeft(timeLimit);
-    setTextAnswer('');
-  };
-
   const handleTextAnswerSubmit = () => {
     if (textAnswer.trim()) {
       handleAnswer(textAnswer.trim());
@@ -269,7 +265,7 @@ function QuizTestContent() {
     return Math.round(totalTime / userAnswers.length);
   };
 
-  if (loading) {
+  if (loading || (vocabularies.length > 0 && !quizStarted)) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
@@ -291,60 +287,6 @@ function QuizTestContent() {
           >
             퀴즈 설정으로 돌아가기
           </button>
-        </div>
-      </div>
-    );
-  }
-
-  if (!quizStarted) {
-    return (
-      <div className="min-h-screen bg-background px-4 py-6 md:px-8 md:py-10">
-        <div className="max-w-2xl mx-auto">
-          <FormCard
-            title="퀴즈 시작"
-            description="준비가 되면 시작 버튼을 눌러주세요"
-          >
-            <div className="text-center space-y-6">
-              <div className="space-y-2">
-                <h3 className="text-lg font-medium text-gray-900 dark:text-white">
-                  퀴즈 정보
-                </h3>
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div className="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg">
-                    <div className="text-gray-500 dark:text-gray-400">문제 수</div>
-                    <div className="font-medium">{questions.length}문제</div>
-                  </div>
-                  <div className="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg">
-                    <div className="text-gray-500 dark:text-gray-400">제한 시간</div>
-                    <div className="font-medium">{timeLimit === 0 ? '제한 없음' : `${timeLimit}초`}</div>
-                  </div>
-                  <div className="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg">
-                    <div className="text-gray-500 dark:text-gray-400">문제 유형</div>
-                    <div className="font-medium">
-                      {questionType === 'word-to-definition' ? '단어 → 뜻' : '뜻 → 단어'}
-                    </div>
-                  </div>
-                  <div className="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg">
-                    <div className="text-gray-500 dark:text-gray-400">답안 유형</div>
-                    <div className="font-medium">
-                      {answerType === 'multiple-choice' ? '객관식' : '주관식'}
-                    </div>
-                  </div>
-                  <div className="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg">
-                    <div className="text-gray-500 dark:text-gray-400">범위</div>
-                    <div className="font-medium">{book || '전체'}</div>
-                  </div>
-                </div>
-              </div>
-              
-              <button
-                onClick={startQuiz}
-                className="px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors duration-200 shadow-sm hover:shadow-sm text-lg"
-              >
-                퀴즈 시작하기
-              </button>
-            </div>
-          </FormCard>
         </div>
       </div>
     );
