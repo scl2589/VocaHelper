@@ -10,12 +10,6 @@ export function useWordPlayback(vocabularies: Vocabulary[], filteredVocabularies
   const pronouncedRef = useRef(true);
   const [repetitionsPerWord, setRepetitionsPerWord] = useState(10);
   const repetitionsRef = useRef(10);
-  const handleRepetitionChange = useCallback((seconds: number) => {
-    if (![1, 3, 5, 10, 15, 20].includes(seconds)) return;
-    repetitionsRef.current = seconds;
-    setRepetitionsPerWord(seconds);
-    try { localStorage.setItem('voca-repetitions-per-word', String(seconds)); } catch { /* Storage may be unavailable. */ }
-  }, []);
   useEffect(() => {
     try {
       const saved = Number(localStorage.getItem('voca-repetitions-per-word'));
@@ -136,16 +130,12 @@ export function useWordPlayback(vocabularies: Vocabulary[], filteredVocabularies
     [showDefinition, currentVocabularies, order, speakWord]
   );
 
-  // 재생/정지에 대한 함수
-  const handleClickPlay = useCallback(() => {
-    if (isPlaying && intervalRef.current) {
+  // Restart the current word with a fresh timer and speech queue.
+  const startPlayback = useCallback(() => {
+    if (intervalRef.current) {
       clearInterval(intervalRef.current);
       intervalRef.current = null;
-      if ('speechSynthesis' in window) window.speechSynthesis.cancel();
-      setIsPlaying(false);
-      return;
     }
-
     if (!currentWord) return;
     // iOS needs the first utterance synchronously inside the button gesture.
     if ('speechSynthesis' in window) window.speechSynthesis.cancel();
@@ -184,7 +174,28 @@ export function useWordPlayback(vocabularies: Vocabulary[], filteredVocabularies
         list[orderRef.current]?.definitions.forEach(def => speakWord(def.definition, 'ko-KR'));
       }
     }, 500);
-  }, [isPlaying, currentWord, speakWord]);
+  }, [currentWord, speakWord]);
+
+  const handleClickPlay = useCallback(() => {
+    if (isPlaying) {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+      intervalRef.current = null;
+      if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+      setIsPlaying(false);
+      return;
+    }
+    startPlayback();
+  }, [isPlaying, startPlayback]);
+
+  const handleRepetitionChange = useCallback((repetitions: number) => {
+    if (![1, 3, 5, 10, 15, 20].includes(repetitions)) return;
+    if (repetitionsRef.current === repetitions) return;
+    repetitionsRef.current = repetitions;
+    setRepetitionsPerWord(repetitions);
+    try { localStorage.setItem('voca-repetitions-per-word', String(repetitions)); } catch { /* Storage may be unavailable. */ }
+    // Keep the first English utterance inside the selection gesture for iOS.
+    if (isPlaying) startPlayback();
+  }, [isPlaying, startPlayback]);
 
   const toggleFilter = useCallback(() => {
     if (isPlaying && intervalRef.current) {
