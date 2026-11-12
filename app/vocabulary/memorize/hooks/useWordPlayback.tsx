@@ -158,7 +158,11 @@ export function useWordPlayback(vocabularies: Vocabulary[], filteredVocabularies
       // A full show/hide cycle is one repetition. Never cut queued speech short.
       if (count >= ticksPerWord) {
         if (pronouncedRef.current && 'speechSynthesis' in window
-          && (window.speechSynthesis.speaking || window.speechSynthesis.pending)) return;
+          && (window.speechSynthesis.speaking || window.speechSynthesis.pending)) {
+          // Keep blinking through the entire word and all queued definitions.
+          setShowDefinition(previous => !previous);
+          return;
+        }
         ticksPerWord = repetitionsRef.current * 2;
         count = 0;
         const next = (orderRef.current + 1) % list.length;
