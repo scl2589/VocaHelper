@@ -100,10 +100,32 @@ export default function WordControls({
 
       <div className="mb-4 flex flex-wrap items-center gap-3 text-sm text-gray-700 dark:text-gray-300">
         <label htmlFor="repetitions-per-word">단어 반복 횟수</label>
-        <select id="repetitions-per-word" value={repetitionsPerWord} onChange={event => onRepetitionChange(Number(event.target.value))}
-          className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 dark:border-gray-600 dark:bg-gray-800 dark:text-white">
-          {[1, 3, 5, 10, 15, 20].map(count => <option key={count} value={count}>{count}회</option>)}
-        </select>
+        <input
+          key={repetitionsPerWord}
+          id="repetitions-per-word"
+          type="number"
+          inputMode="numeric"
+          min={1}
+          max={Number.MAX_SAFE_INTEGER}
+          step={1}
+          defaultValue={repetitionsPerWord}
+          onBlur={event => {
+            const repetitions = event.currentTarget.valueAsNumber;
+            if (Number.isSafeInteger(repetitions) && repetitions >= 1) {
+              onRepetitionChange(repetitions);
+            } else {
+              event.currentTarget.value = String(repetitionsPerWord);
+            }
+          }}
+          onKeyDown={event => {
+            if (event.key === 'Enter') {
+              event.preventDefault();
+              event.currentTarget.blur();
+            }
+          }}
+          className="w-24 rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+        />
+        <span>회</span>
         {!isPlaying && <span className="text-xs text-gray-500 dark:text-gray-400">영단어와 모든 뜻을 읽으면 1회예요. 선택한 횟수만큼 반복한 뒤 다음 단어로 넘어가요. 소리를 끄면 1회당 5초 동안 깜빡여요.</span>}
       </div>
 

@@ -13,7 +13,7 @@ export function useWordPlayback(vocabularies: Vocabulary[], filteredVocabularies
   useEffect(() => {
     try {
       const saved = Number(localStorage.getItem('voca-repetitions-per-word'));
-      if ([1, 3, 5, 10, 15, 20].includes(saved)) {
+      if (Number.isSafeInteger(saved) && saved >= 1) {
         repetitionsRef.current = saved;
         setRepetitionsPerWord(saved);
       }
@@ -214,7 +214,7 @@ export function useWordPlayback(vocabularies: Vocabulary[], filteredVocabularies
   }, [isPlaying, startPlayback]);
 
   const handleRepetitionChange = useCallback((repetitions: number) => {
-    if (![1, 3, 5, 10, 15, 20].includes(repetitions)) return;
+    if (!Number.isSafeInteger(repetitions) || repetitions < 1) return;
     if (repetitionsRef.current === repetitions) return;
     repetitionsRef.current = repetitions;
     setRepetitionsPerWord(repetitions);

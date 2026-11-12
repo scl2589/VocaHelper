@@ -53,7 +53,7 @@ function setup(repetitions) {
     tick() { timer?.(); render(); }, finish() { queue.shift().onend(); },
     get running() { return timer !== null; } };
 }
-for (const repetitions of [1, 3, 5]) {
+for (const repetitions of [1, 2, 3, 5, 7, 21]) {
   const h = setup(repetitions);
   h.api.handleClickPlay(); h.render();
   for (let cycle = 0; cycle < repetitions; cycle++) {
@@ -96,3 +96,14 @@ assert.equal(error.running, false);
 assert.equal(error.api.order, 0);
 assert.ok(error.api.speechError);
 console.log('Passed: full reading repetitions, continuous blinking, multiple definitions, stop, restart, stale events, silent timing, and speech errors.');
+
+const custom = setup(7);
+assert.equal(custom.api.repetitionsPerWord, 7);
+custom.api.handleRepetitionChange(42); custom.render();
+assert.equal(custom.api.repetitionsPerWord, 42);
+for (const invalid of [0, -1, 1.5, NaN, Infinity, Number.MAX_SAFE_INTEGER + 1]) {
+  custom.api.handleRepetitionChange(invalid); custom.render();
+  assert.equal(custom.api.repetitionsPerWord, 42);
+  assert.equal(setup(invalid).api.repetitionsPerWord, 10);
+}
+console.log('Passed: custom repetition counts and invalid input rejection.');
