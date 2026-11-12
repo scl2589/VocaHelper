@@ -68,7 +68,7 @@ export function useWordPlayback(vocabularies: Vocabulary[], filteredVocabularies
   }, []);
 
   // Read the latest sound setting even inside an already-running timer.
-  const speakWord = useCallback((text: string, language = 'en-US') => {
+  const speakWord = useCallback((text: string, language = 'en-US', onComplete?: (success: boolean) => void) => {
     if (!pronouncedRef.current) return;
     if (!('speechSynthesis' in window) || !('SpeechSynthesisUtterance' in window)) {
       setSpeechError('이 브라우저는 발음을 지원하지 않습니다. Safari에서 열어주세요.');
@@ -83,27 +83,39 @@ export function useWordPlayback(vocabularies: Vocabulary[], filteredVocabularies
       || voices.find(item => item.lang.startsWith(language.split('-')[0]));
     if (voice) utterance.voice = voice;
     utterance.onstart = () => setSpeechError(null);
+    utterance.onend = () => onComplete?.(true);
     utterance.onerror = event => {
+      onComplete?.(false);
       if (event.error === 'interrupted' || event.error === 'canceled') return;
       setSpeechError('발음을 재생하지 못했어요. 소리 버튼을 껐다 켜고, 아이폰 음량과 무음 모드를 확인해주세요.');
     };
     if (synth.paused) synth.resume();
     synth.speak(utterance);
+    return true;
+  }, []);
+
+  const stopPlayback = useCallback(() => {
+    if (intervalRef.current) clearInterval(intervalRef.current);
+    intervalRef.current = null;
+    if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+    setIsPlaying(false);
   }, []);
 
   const handleClickSpeaker = useCallback(() => {
+    stopPlayback();
     const enabled = !pronouncedRef.current;
     pronouncedRef.current = enabled;
     setIsPronounced(enabled);
     if ('speechSynthesis' in window) window.speechSynthesis.cancel();
     if (enabled && currentWord) speakWord(currentWord.word);
     else setSpeechError(null);
-  }, [currentWord, speakWord]);
+  }, [currentWord, speakWord, stopPlayback]);
 
   // 단어 넘기기 (다음 단어/ 이전 단어)
   const handleNavigation = useCallback(
     (direction: 'next' | 'prev') => {
       if (!currentVocabularies.length) return;
+      stopPlayback();
       const changesWord = direction === 'next' ? showDefinition : !showDefinition;
       if (changesWord) {
         const nextOrder = (order + (direction === 'next' ? 1 : -1) + currentVocabularies.length) % currentVocabularies.length;
@@ -127,7 +139,7 @@ export function useWordPlayback(vocabularies: Vocabulary[], filteredVocabularies
         }
       }
     },
-    [showDefinition, currentVocabularies, order, speakWord]
+    [showDefinition, currentVocabularies, order, speakWord, stopPlayback]
   );
 
   // Restart the current word with a fresh timer and speech queue.
@@ -139,44 +151,54 @@ export function useWordPlayback(vocabularies: Vocabulary[], filteredVocabularies
     if (!currentWord) return;
     // iOS needs the first utterance synchronously inside the button gesture.
     if ('speechSynthesis' in window) window.speechSynthesis.cancel();
-    speakWord(currentWord.word);
     setIsPlaying(true);
     setShowDefinition(false);
 
-    let count = 0;
-    let ticksPerWord = repetitionsRef.current * 2;
+    let completedRepetitions = 0;
+    let cycle = { remaining: 0, failed: false, ticks: 0, silent: false };
+    const readCycle = (word: Vocabulary) => {
+      const readings = [
+        { text: word.word, language: 'en-US' },
+        ...word.definitions.map(def => ({ text: def.definition, language: 'ko-KR' })),
+      ].filter(reading => reading.text.trim());
+      const activeCycle = { remaining: readings.length, failed: false, ticks: 0, silent: !pronouncedRef.current };
+      cycle = activeCycle;
+      if (activeCycle.silent) return;
+      for (const reading of readings) {
+        const queued = speakWord(reading.text, reading.language, success => {
+          activeCycle.remaining--;
+          if (!success) activeCycle.failed = true;
+        });
+        if (!queued) activeCycle.failed = true;
+      }
+    };
+    // Queue English and every definition together; only their completion counts.
+    readCycle(currentWord);
 
     intervalRef.current = setInterval(() => {
       const list = showOnlyUnmemorizedRef.current
         ? filteredVocabulariesRef.current : vocabulariesRef.current;
-      if (!list.length) {
+      if (!list.length || cycle.failed) {
         if (intervalRef.current) clearInterval(intervalRef.current);
         intervalRef.current = null;
+        if ('speechSynthesis' in window) window.speechSynthesis.cancel();
         setIsPlaying(false);
         return;
       }
-      // A full show/hide cycle is one repetition. Never cut queued speech short.
-      if (count >= ticksPerWord) {
-        if (pronouncedRef.current && 'speechSynthesis' in window
-          && (window.speechSynthesis.speaking || window.speechSynthesis.pending)) {
-          // Keep blinking through the entire word and all queued definitions.
-          setShowDefinition(previous => !previous);
-          return;
-        }
-        ticksPerWord = repetitionsRef.current * 2;
-        count = 0;
-        const next = (orderRef.current + 1) % list.length;
-        orderRef.current = next;
-        setOrder(next);
+      cycle.ticks++;
+      setShowDefinition(previous => !previous);
+      // With sound off, give each silent repetition five seconds of blinking.
+      if (cycle.silent ? cycle.ticks < 10 : cycle.remaining > 0) return;
+
+      completedRepetitions++;
+      if (completedRepetitions >= repetitionsRef.current) {
+        completedRepetitions = 0;
+        orderRef.current = (orderRef.current + 1) % list.length;
+        setOrder(orderRef.current);
         setShowDefinition(false);
-        speakWord(list[next].word);
-        return;
       }
-      count++;
-      setShowDefinition(count % 2 === 1);
-      if (count === 1) {
-        list[orderRef.current]?.definitions.forEach(def => speakWord(def.definition, 'ko-KR'));
-      }
+      const word = list[orderRef.current];
+      if (word) readCycle(word);
     }, 500);
   }, [currentWord, speakWord]);
 
@@ -215,9 +237,10 @@ export function useWordPlayback(vocabularies: Vocabulary[], filteredVocabularies
 
   // 다시 첫 단어로 이동하고, 뜻 숨기기
   const resetPosition = useCallback(() => {
+    stopPlayback();
     setOrder(0);
     setShowDefinition(false);
-  }, []);
+  }, [stopPlayback]);
 
   return {
     order,
